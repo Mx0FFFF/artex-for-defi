@@ -1,0 +1,764 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeFi evidence record (proposed ARTEX adapter schema)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "status",
+    "detector_ids",
+    "environment",
+    "root_cause",
+    "attacker_capabilities",
+    "preconditions",
+    "locations",
+    "violated_property",
+    "evidence",
+    "impact",
+    "false_positive_review",
+    "limitations"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "hypothesis",
+        "statically_supported",
+        "reproduced",
+        "confirmed",
+        "refuted",
+        "blocked",
+        "not_applicable"
+      ]
+    },
+    "severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "informational",
+        "unrated"
+      ]
+    },
+    "detector_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "minItems": 1
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "chain",
+        "fork_block",
+        "compiler",
+        "tool_versions"
+      ],
+      "properties": {
+        "commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "chain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fork_block": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "compiler": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "optimizer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evm_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tool_versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "source_bytecode_match": {
+          "enum": [
+            "verified",
+            "unverified",
+            "not_applicable"
+          ]
+        },
+        "fork_block_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "execution_engine": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment_manifest_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-fA-F]{64}$",
+          "description": "SHA-256 of the retained manifest recording compiler/optimizer or runtime, dependencies, chain state and relevant configuration. It must not include secrets."
+        },
+        "code_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "digest"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "git_commit",
+                "source_archive_sha256",
+                "runtime_bytecode_sha256"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "git_commit"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "digest": {
+                    "pattern": "^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "digest": {
+                    "pattern": "^[0-9a-fA-F]{64}$"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "root_cause": {
+      "type": "string"
+    },
+    "attacker_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "violated_property": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "test_id",
+        "replayed_cleanly",
+        "artifacts",
+        "reachability_explanation"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "none",
+            "static_trace",
+            "local_test",
+            "fork_test",
+            "formal_counterexample",
+            "proof"
+          ]
+        },
+        "test_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "replayed_cleanly": {
+          "type": "boolean"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "reachability_explanation": {
+          "type": "string"
+        },
+        "before_state": {
+          "type": "object"
+        },
+        "after_state": {
+          "type": "object"
+        },
+        "synthetic_setup": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "command": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Exact reproduction or proof-check command with secrets omitted and referenced through environment variables."
+        },
+        "seed": {
+          "type": [
+            "integer",
+            "string",
+            "null"
+          ],
+          "description": "Random seed for randomized campaigns; null for a fully deterministic reproduction."
+        },
+        "proof_scope": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Precise statement, assumptions, abstractions and bounds for a formal result; distinguishes a vulnerability witness from a safety theorem."
+        },
+        "independent_verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "performed",
+            "method",
+            "verifier",
+            "artifacts"
+          ],
+          "properties": {
+            "performed": {
+              "type": "boolean"
+            },
+            "method": {
+              "enum": [
+                "none",
+                "independent_replay",
+                "checkable_proof"
+              ]
+            },
+            "verifier": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Identifier of the independent reviewer or checking process; not merely the originating agent repeating its claim."
+            },
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    },
+    "impact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "description",
+        "profit_claimed"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "asset_loss",
+            "insolvency",
+            "unauthorized_control",
+            "funds_frozen",
+            "denial_of_service",
+            "incorrect_settlement",
+            "other",
+            "unknown",
+            "not_applicable",
+            "no_confirmed_impact"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "profit_claimed": {
+          "type": "boolean"
+        },
+        "profit_model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Net realized or realistically realizable value, including all attacker-controlled accounts, liabilities, costs and execution assumptions."
+        },
+        "affected_value_basis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "time_and_liquidity_constraints": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "profit_claimed": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "profit_model"
+            ],
+            "properties": {
+              "profit_model": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "false_positive_review": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "remediation": {
+      "type": "string"
+    },
+    "patch_regression": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "reproduced",
+              "confirmed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "root_cause": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "violated_property": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "locations": {
+            "minItems": 1
+          },
+          "environment": {
+            "required": [
+              "code_identity",
+              "environment_manifest_sha256",
+              "execution_engine"
+            ],
+            "properties": {
+              "environment_manifest_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{64}$"
+              },
+              "execution_engine": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "tool_versions": {
+                "minProperties": 1
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "code_identity": {
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "git_commit",
+                            "source_archive_sha256"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "compiler": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "evidence": {
+            "required": [
+              "command",
+              "seed"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "local_test",
+                  "fork_test",
+                  "formal_counterexample",
+                  "proof"
+                ]
+              },
+              "command": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "artifacts": {
+                "minItems": 1
+              },
+              "reachability_explanation": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "local_test",
+                        "fork_test"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "replayed_cleanly": {
+                      "const": true
+                    },
+                    "test_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "formal_counterexample",
+                        "proof"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "proof_scope"
+                  ],
+                  "properties": {
+                    "proof_scope": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "impact": {
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "confirmed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "false_positive_review": {
+            "minItems": 1
+          },
+          "impact": {
+            "properties": {
+              "category": {
+                "enum": [
+                  "asset_loss",
+                  "insolvency",
+                  "unauthorized_control",
+                  "funds_frozen",
+                  "denial_of_service",
+                  "incorrect_settlement",
+                  "other"
+                ]
+              }
+            }
+          },
+          "evidence": {
+            "required": [
+              "independent_verification"
+            ],
+            "properties": {
+              "independent_verification": {
+                "properties": {
+                  "performed": {
+                    "const": true
+                  },
+                  "method": {
+                    "enum": [
+                      "independent_replay",
+                      "checkable_proof"
+                    ]
+                  },
+                  "verifier": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  },
+                  "artifacts": {
+                    "minItems": 1
+                  }
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "local_test",
+                        "fork_test"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "independent_verification": {
+                      "properties": {
+                        "method": {
+                          "const": "independent_replay"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "formal_counterexample",
+                        "proof"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "independent_verification": {
+                      "properties": {
+                        "method": {
+                          "enum": [
+                            "independent_replay",
+                            "checkable_proof"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "reproduced",
+              "confirmed"
+            ]
+          },
+          "evidence": {
+            "properties": {
+              "kind": {
+                "const": "fork_test"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "required": [
+              "fork_block_hash"
+            ],
+            "properties": {
+              "chain": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "fork_block": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "fork_block_hash": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "description": "Adapter-owned evidence format. Schema validation checks record completeness, not truth, reachability, independence, or security. The orchestrator and reviewer must verify those claims."
+}

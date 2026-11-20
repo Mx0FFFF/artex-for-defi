@@ -1,0 +1,434 @@
+{
+  "description": "Explicit retrieval hints only; no card is an executable detector or finding.",
+  "rules": {
+    "ECO-01": {
+      "baseline": false,
+      "features": [
+        "donations"
+      ],
+      "protocols": [
+        "lending",
+        "vault"
+      ]
+    },
+    "ECO-02": {
+      "baseline": false,
+      "features": [
+        "donations",
+        "oracle"
+      ],
+      "protocols": [
+        "lending",
+        "vault"
+      ]
+    },
+    "ECO-03": {
+      "baseline": false,
+      "features": [
+        "rounding"
+      ],
+      "protocols": [
+        "amm",
+        "lending",
+        "vault"
+      ]
+    },
+    "ECO-04": {
+      "baseline": false,
+      "features": [
+        "solvency"
+      ],
+      "protocols": [
+        "lending"
+      ]
+    },
+    "ECO-05": {
+      "baseline": false,
+      "features": [
+        "liquidation"
+      ],
+      "protocols": [
+        "lending"
+      ]
+    },
+    "ECO-06": {
+      "baseline": false,
+      "features": [
+        "interest"
+      ],
+      "protocols": [
+        "lending",
+        "staking"
+      ]
+    },
+    "ECO-07": {
+      "baseline": false,
+      "features": [
+        "flash_liquidity",
+        "oracle"
+      ],
+      "protocols": [
+        "amm",
+        "lending",
+        "perps"
+      ]
+    },
+    "ECO-08": {
+      "baseline": false,
+      "features": [
+        "oracle"
+      ],
+      "protocols": [
+        "lending",
+        "perps",
+        "vault"
+      ]
+    },
+    "ECO-09": {
+      "baseline": false,
+      "features": [
+        "l2",
+        "oracle"
+      ],
+      "protocols": []
+    },
+    "ECO-10": {
+      "baseline": false,
+      "features": [
+        "stable_amm"
+      ],
+      "protocols": [
+        "amm"
+      ]
+    },
+    "ECO-11": {
+      "baseline": false,
+      "features": [
+        "concentrated_liquidity"
+      ],
+      "protocols": [
+        "amm"
+      ]
+    },
+    "ECO-12": {
+      "baseline": false,
+      "features": [
+        "rewards"
+      ],
+      "protocols": [
+        "staking",
+        "vault"
+      ]
+    },
+    "ECO-13": {
+      "baseline": false,
+      "features": [
+        "async",
+        "queues"
+      ],
+      "protocols": [
+        "bridge",
+        "vault"
+      ]
+    },
+    "ECO-14": {
+      "baseline": false,
+      "features": [
+        "flash_liquidity"
+      ],
+      "protocols": [
+        "governance"
+      ]
+    },
+    "ECO-15": {
+      "baseline": false,
+      "features": [
+        "funding",
+        "orders"
+      ],
+      "protocols": [
+        "perps"
+      ]
+    },
+    "EVM-01": {
+      "baseline": true,
+      "features": [
+        "permissions"
+      ],
+      "protocols": []
+    },
+    "EVM-02": {
+      "baseline": false,
+      "features": [
+        "upgrade"
+      ],
+      "protocols": [
+        "bridge",
+        "governance",
+        "router"
+      ]
+    },
+    "EVM-03": {
+      "baseline": true,
+      "features": [
+        "callbacks"
+      ],
+      "protocols": []
+    },
+    "EVM-04": {
+      "baseline": false,
+      "features": [
+        "callbacks",
+        "oracle"
+      ],
+      "protocols": [
+        "amm",
+        "lending",
+        "vault"
+      ]
+    },
+    "EVM-05": {
+      "baseline": false,
+      "features": [
+        "callbacks",
+        "flash_liquidity"
+      ],
+      "protocols": [
+        "amm",
+        "lending",
+        "router"
+      ]
+    },
+    "EVM-06": {
+      "baseline": false,
+      "features": [
+        "signatures"
+      ],
+      "protocols": [
+        "bridge",
+        "governance",
+        "router"
+      ]
+    },
+    "EVM-07": {
+      "baseline": false,
+      "features": [
+        "multicall"
+      ],
+      "protocols": [
+        "router"
+      ]
+    },
+    "EVM-08": {
+      "baseline": true,
+      "features": [
+        "tokens"
+      ],
+      "protocols": []
+    },
+    "EVM-09": {
+      "baseline": true,
+      "features": [
+        "rounding"
+      ],
+      "protocols": []
+    },
+    "EVM-10": {
+      "baseline": false,
+      "features": [
+        "donations"
+      ],
+      "protocols": [
+        "lending",
+        "vault"
+      ]
+    },
+    "EVM-11": {
+      "baseline": false,
+      "features": [
+        "arbitrary_execution"
+      ],
+      "protocols": [
+        "bridge",
+        "router"
+      ]
+    },
+    "EVM-12": {
+      "baseline": false,
+      "features": [
+        "proofs",
+        "signatures"
+      ],
+      "protocols": [
+        "bridge",
+        "governance",
+        "router"
+      ]
+    },
+    "EVM-13": {
+      "baseline": false,
+      "features": [
+        "liveness",
+        "queues"
+      ],
+      "protocols": [
+        "bridge",
+        "staking",
+        "vault"
+      ]
+    },
+    "EVM-14": {
+      "baseline": false,
+      "features": [
+        "compiler",
+        "eip7702",
+        "transient"
+      ],
+      "protocols": [
+        "router"
+      ]
+    },
+    "X01": {
+      "baseline": false,
+      "features": [
+        "bridge"
+      ],
+      "protocols": [
+        "bridge"
+      ]
+    },
+    "X02": {
+      "baseline": false,
+      "features": [
+        "async",
+        "bridge"
+      ],
+      "protocols": [
+        "bridge"
+      ]
+    },
+    "X03": {
+      "baseline": false,
+      "features": [
+        "bridge",
+        "proofs",
+        "upgrade"
+      ],
+      "protocols": [
+        "bridge"
+      ]
+    },
+    "X04": {
+      "baseline": false,
+      "features": [
+        "async",
+        "bridge"
+      ],
+      "protocols": [
+        "bridge"
+      ]
+    },
+    "X05": {
+      "baseline": false,
+      "features": [
+        "async",
+        "bridge",
+        "queues"
+      ],
+      "protocols": [
+        "bridge"
+      ]
+    },
+    "X06": {
+      "baseline": true,
+      "features": [
+        "permissions",
+        "signatures"
+      ],
+      "protocols": []
+    },
+    "X07": {
+      "baseline": true,
+      "features": [
+        "accounts",
+        "tokens"
+      ],
+      "protocols": []
+    },
+    "X08": {
+      "baseline": false,
+      "features": [
+        "cpi"
+      ],
+      "protocols": [
+        "bridge",
+        "router"
+      ]
+    },
+    "X09": {
+      "baseline": false,
+      "features": [
+        "pda"
+      ],
+      "protocols": [
+        "lending",
+        "staking",
+        "vault"
+      ]
+    },
+    "X10": {
+      "baseline": false,
+      "features": [
+        "accounts",
+        "cpi"
+      ],
+      "protocols": [
+        "amm",
+        "lending",
+        "vault"
+      ]
+    },
+    "X11": {
+      "baseline": false,
+      "features": [
+        "account_lifecycle"
+      ],
+      "protocols": [
+        "lending",
+        "staking",
+        "vault"
+      ]
+    },
+    "X12": {
+      "baseline": false,
+      "features": [
+        "token2022"
+      ],
+      "protocols": [
+        "amm",
+        "lending",
+        "vault"
+      ]
+    },
+    "X13": {
+      "baseline": true,
+      "features": [
+        "capabilities",
+        "permissions"
+      ],
+      "protocols": []
+    },
+    "X14": {
+      "baseline": false,
+      "features": [
+        "flash_liquidity",
+        "hot_potato"
+      ],
+      "protocols": [
+        "amm",
+        "lending"
+      ]
+    }
+  },
+  "schema_version": "1.0"
+}

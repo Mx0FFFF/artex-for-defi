@@ -1,0 +1,12 @@
+{
+  "package": "ARTEX_DeFi_Detection_Pack",
+  "research_date": "2026-11-06",
+  "catalog_schema_version": "1.0",
+  "expected_cards": 43,
+  "expected_sources": 71,
+  "files": {
+    "detector_catalog.json": "7556004ae02009cec36cf480d7ca476406a1de7062b8014ed30e2daf88b54f17",
+    "sources.json": "ca9db41e1a00d60ab37b65ae256ce25b2142efe10832115d30090e5e3a83b8b0",
+    "selection_rules.json": "878d2d6e19f6ba1360b51c33cd6c9a0d1b4a59e2860bfcf15afa7c2d62000d79"
+  }
+}

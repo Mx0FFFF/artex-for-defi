@@ -1,0 +1,571 @@
+[
+  {
+    "id": "E1",
+    "label": "https://docs.openzeppelin.com/contracts/5.x/access-control",
+    "urls": [
+      "https://docs.openzeppelin.com/contracts/5.x/access-control"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E2",
+    "label": "https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable",
+    "urls": [
+      "https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E3",
+    "label": "https://docs.solidity.org/en/latest/security-considerations.html",
+    "urls": [
+      "https://docs.solidity.org/en/latest/security-considerations.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E4",
+    "label": "https://www.chainsecurity.com/blog/curve-lp-oracle-manipulation-post-mortem",
+    "urls": [
+      "https://www.chainsecurity.com/blog/curve-lp-oracle-manipulation-post-mortem"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E5",
+    "label": "https://github.com/Uniswap/v3-core/blob/main/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+    "urls": [
+      "https://github.com/Uniswap/v3-core/blob/main/contracts/interfaces/callback/IUniswapV3SwapCallback.sol"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E6",
+    "label": "https://eips.ethereum.org/EIPS/eip-712",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-712"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E7",
+    "label": "https://eips.ethereum.org/EIPS/eip-2612",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-2612"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E8",
+    "label": "https://developers.uniswap.org/docs/protocols/permit2/concepts/signature-transfer",
+    "urls": [
+      "https://developers.uniswap.org/docs/protocols/permit2/concepts/signature-transfer"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E9",
+    "label": "https://www.openzeppelin.com/news/arbitrary-address-spoofing-vulnerability-erc2771context-multicall-public-disclosure",
+    "urls": [
+      "https://www.openzeppelin.com/news/arbitrary-address-spoofing-vulnerability-erc2771context-multicall-public-disclosure"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E10",
+    "label": "https://github.com/d-xo/weird-erc20",
+    "urls": [
+      "https://github.com/d-xo/weird-erc20"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E11",
+    "label": "https://docs.openzeppelin.com/contracts/5.x/api/utils",
+    "urls": [
+      "https://docs.openzeppelin.com/contracts/5.x/api/utils"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E12",
+    "label": "https://eips.ethereum.org/EIPS/eip-4626",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-4626"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E13",
+    "label": "https://docs.openzeppelin.com/contracts/4.x/erc4626",
+    "urls": [
+      "https://docs.openzeppelin.com/contracts/4.x/erc4626"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E14",
+    "label": "https://docs.solidity.org/en/latest/abi-spec.html",
+    "urls": [
+      "https://docs.solidity.org/en/latest/abi-spec.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E15",
+    "label": "https://docs.soliditylang.org/en/latest/contracts.html?highlight=constructor",
+    "urls": [
+      "https://docs.soliditylang.org/en/latest/contracts.html?highlight=constructor"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E16",
+    "label": "https://eips.ethereum.org/EIPS/eip-6780",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-6780"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E17",
+    "label": "https://docs.solidity.org/en/latest/bugs.html",
+    "urls": [
+      "https://docs.solidity.org/en/latest/bugs.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "E18",
+    "label": "https://eips.ethereum.org/EIPS/eip-7702",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-7702"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC1",
+    "label": "OpenZeppelin, ERC4626 security guide",
+    "urls": [
+      "https://docs.openzeppelin.com/contracts/4.x/erc4626"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC2",
+    "label": "Euler, Donation attacks",
+    "urls": [
+      "https://docs.euler.finance/curate/vaults/evk/donation-attacks/"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC3",
+    "label": "Euler, Exchange Rate Manipulation in ERC4626 Vaults",
+    "urls": [
+      "https://euler.finance/blog/exchange-rate-manipulation-in-erc4626-vaults"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC4",
+    "label": "Euler, War & Peace, January 2024 account of March 2023 incident",
+    "urls": [
+      "https://www.euler.finance/blog/war-peace-behind-the-scenes-of-eulers-240m-exploit-recovery"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC5",
+    "label": "Aave, Health Factor & Liquidations",
+    "urls": [
+      "https://aave.com/help/borrowing/liquidations"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC6",
+    "label": "Aave V3 Reserves",
+    "urls": [
+      "https://www.aave.com/docs/aave-v3/concepts/reserve"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC7",
+    "label": "Uniswap, Price Oracles",
+    "urls": [
+      "https://developers.uniswap.org/docs/protocols/v3/concepts/price-oracles"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC8",
+    "label": "Chainlink, Data Feeds overview",
+    "urls": [
+      "https://docs.chain.link/data-feeds/overview"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC9",
+    "label": "Chainlink, Data Feeds API reference",
+    "urls": [
+      "https://docs.chain.link/data-feeds/api-reference"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC10",
+    "label": "Chainlink, L2 Sequencer Uptime Feeds",
+    "urls": [
+      "https://docs.chain.link/data-feeds/l2-sequencer-feeds"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC11",
+    "label": "Balancer Protocol, Nov 3 Exploit Post-Mortem, November 18, 2025",
+    "urls": [
+      "https://medium.com/balancer-protocol/nov-3-exploit-post-mortem-51dcbeb6b020"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC12",
+    "label": "KyberSwap official postmortem, February 2024",
+    "urls": [
+      "https://blog.kyberswap.com/post-mortem-kyberswap-elastic-exploit/"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC13",
+    "label": "OpenZeppelin, Origin Governance Audit",
+    "urls": [
+      "https://www.openzeppelin.com/news/origin-governance-audit"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC14",
+    "label": "ERC-7540",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-7540"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC15",
+    "label": "OpenZeppelin Governance API",
+    "urls": [
+      "https://docs.openzeppelin.com/contracts/5.x/api/governance"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC16",
+    "label": "GMX, Fees",
+    "urls": [
+      "https://docs.gmx.io/docs/trading/fees/"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC17",
+    "label": "GMX, Providing liquidity",
+    "urls": [
+      "https://docs.gmx.io/docs/providing-liquidity/"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC18",
+    "label": "Synthetix SIP-337, official repository",
+    "urls": [
+      "https://github.com/Synthetixio/SIPs/blob/master/content/sips/sip-337.md"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC19",
+    "label": "Vyper team technical postmortem",
+    "urls": [
+      "https://hackmd.io/@vyperlang/HJUgNMhs2"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "EC20",
+    "label": "ERC-4626 interface specification",
+    "urls": [
+      "https://eips.ethereum.org/EIPS/eip-4626"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS1",
+    "label": "Chainlink, CCIP Best Practices (EVM)",
+    "urls": [
+      "https://docs.chain.link/ccip/evm/concepts/best-practices"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS2",
+    "label": "OP Stack, Interop Messaging",
+    "urls": [
+      "https://specs.optimism.io/interop/messaging.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS3",
+    "label": "OP Stack, Cross Domain Messengers",
+    "urls": [
+      "https://specs.optimism.io/protocol/messengers.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS4",
+    "label": "Nomad, original root-cause analysis, 5 Aug 2022",
+    "urls": [
+      "https://medium.com/nomad-xyz-blog/nomad-bridge-hack-root-cause-analysis-875ad2e5aacd"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS5",
+    "label": "Wormhole, Get Started with Core Contracts",
+    "urls": [
+      "https://wormhole.com/docs/products/messaging/guides/core-contracts/"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS6",
+    "label": "Solana, guide for Ethereum developers",
+    "urls": [
+      "https://solana.com/developers/migrate-to-solana/complete-guide"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS7",
+    "label": "Anchor, Account Constraints",
+    "urls": [
+      "https://www.anchor-lang.com/docs/references/account-constraints"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS8",
+    "label": "Solana, Account Structure",
+    "urls": [
+      "https://solana.com/docs/core/accounts/account-structure"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS9",
+    "label": "Solana, Account Types",
+    "urls": [
+      "https://solana.com/docs/core/accounts/account-types"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS10",
+    "label": "Solana, Cross Program Invocation",
+    "urls": [
+      "https://solana.com/docs/core/cpi"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS11",
+    "label": "Solana Foundation, native CPI lesson",
+    "urls": [
+      "https://github.com/solana-foundation/developer-content/blob/main/content/courses/native-onchain-development/cross-program-invocations.md"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS12",
+    "label": "Solana Foundation, Bump Seed Canonicalization (archived educational source)",
+    "urls": [
+      "https://github.com/solana-foundation/developer-content/blob/main/content/courses/program-security/bump-seed-canonicalization.md"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS13",
+    "label": "Solana Foundation, Closing Accounts (archived educational source)",
+    "urls": [
+      "https://github.com/solana-foundation/developer-content/blob/main/content/courses/program-security/closing-accounts.md"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS14",
+    "label": "Solana, Transfer Fees",
+    "urls": [
+      "https://solana.com/docs/tokens/extensions/transfer-fees"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS15",
+    "label": "Solana, Transfer Hook",
+    "urls": [
+      "https://solana.com/docs/tokens/extensions/transfer-hook"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS16",
+    "label": "Sui, Security Best Practices",
+    "urls": [
+      "https://docs.sui.io/develop/security/best-practices"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS17",
+    "label": "OpenZeppelin, Critical Bug Patterns in Sui Move",
+    "urls": [
+      "https://www.openzeppelin.com/news/critical-bug-patterns-in-sui-move"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "XS18",
+    "label": "Sui, DeepBook Flash Loans",
+    "urls": [
+      "https://www.docs.sui.io/onchain-finance/deepbook/deepbookv3/contract-information/flash-loans"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P1",
+    "label": "ARTEX README",
+    "urls": [
+      "https://github.com/BaaRai/ARTEX"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P2",
+    "label": "ARTEX configuration example",
+    "urls": [
+      "https://github.com/BaaRai/ARTEX/blob/main/config.example.json"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P3",
+    "label": "ARTEX RSI contract",
+    "urls": [
+      "https://github.com/BaaRai/ARTEX/blob/main/RSI.md"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P4",
+    "label": "Slither official repository",
+    "urls": [
+      "https://github.com/crytic/slither"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P5",
+    "label": "Foundry official Forge documentation",
+    "urls": [
+      "https://www.getfoundry.sh/forge/index.html",
+      "https://www.getfoundry.sh/guides/index.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P6",
+    "label": "Echidna official repository",
+    "urls": [
+      "https://github.com/crytic/echidna"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P7",
+    "label": "Medusa official repository",
+    "urls": [
+      "https://github.com/crytic/medusa"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P8",
+    "label": "Medusa reporting documentation",
+    "urls": [
+      "https://secure-contracts.com/program-analysis/medusa/docs/src/testing/reporting.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P9",
+    "label": "Solidity SMTChecker documentation",
+    "urls": [
+      "https://docs.soliditylang.org/en/latest/smtchecker.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P10",
+    "label": "Medusa fuzzing lifecycle",
+    "urls": [
+      "https://secure-contracts.com/program-analysis/medusa/docs/src/testing/fuzzing_lifecycle.html"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "P11",
+    "label": "SmartBugs Curated official repository",
+    "urls": [
+      "https://github.com/smartbugs/smartbugs-curated"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "Q1",
+    "label": "Euler Labs, January 2024 retrospective on the March 2023 V1 exploit",
+    "urls": [
+      "https://euler.finance/blog/war-peace-behind-the-scenes-of-eulers-240m-exploit-recovery"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "Q2",
+    "label": "Vyper project advisory GHSA-5824-cm3x-3c38",
+    "urls": [
+      "https://github.com/vyperlang/vyper/security/advisories/GHSA-5824-cm3x-3c38"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "Q3",
+    "label": "Immunefi, original coordinated-disclosure bugfix review",
+    "urls": [
+      "https://immunefi.com/blog/bug-fix-reviews/balancer-rounding-error/"
+    ],
+    "accessed": "2026-11-06"
+  },
+  {
+    "id": "Q4",
+    "label": "OpenZeppelin, original Neutron finding analysis in Bug Digest 8",
+    "urls": [
+      "https://www.openzeppelin.com/news/the-notorious-bug-digest-8"
+    ],
+    "accessed": "2026-11-06"
+  }
+]

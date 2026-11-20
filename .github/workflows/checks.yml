@@ -1,0 +1,65 @@
+name: Repository checks
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 scripts/check-private-paths.py
+      - name: Scan reachable commits for credentials
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSL --retry 3 https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
+          echo '9991e0b2903da4c8f6122b5c3186448b927a5da4deef1fe45271c3793f4ee29c  gitleaks.tar.gz' | sha256sum --check --strict
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks git --config "$GITHUB_WORKSPACE/.gitleaks.toml" --redact=100 --no-banner --log-opts='--all --full-history' "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test web/src/lib/*.test.mjs
+      - run: python3 -B -m unittest discover -s skills/defi-audit/tests -p test_evaluate.py -v
+      - run: python3 -B -m unittest discover -s skills/defi-audit/scripts -p test_sandbox_exec.py -v
+
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: artex
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: artex_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U artex -d artex_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Test authentication and chat references
+        env:
+          ARTEX_PG_DSN: postgres://artex:ci-only@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/artex_test?sslmode=disable
+        run: go test -count=1 ./server -run '^Test(Auth[A-Z]|ChatMention)'
+      - name: Test service credential handling in child processes
+        run: >-
+          go test -count=1 -run '^Test(ShellEnvMasksServiceCredentials|ProxyEnv|ExecPython|StdioMCPServiceCredentials|MonitorForwardsSessionEnv|BashEnvInjection)'
+          ./agent ./server github.com/Autumn-27/norma/tool

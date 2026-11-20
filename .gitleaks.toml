@@ -1,0 +1,19 @@
+[extend]
+useDefault = true
+
+# Synthetic inputs used to verify that notification settings are redacted.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+condition = "AND"
+paths = ['''(^|/)(notify/(mask|redact)_test|server/notify_api_test)\.go$''']
+regexTarget = "secret"
+regexes = [
+  '''^(https://oapi\.dingtalk\.com/robot/send\?access_token=abcdef123456|abcdef123456|SECtest123456|SECabcdef123456|LEAKPROBE0123456789abcdef)$''',
+]
+
+# The random key generator's public alphabet.
+[[rules.allowlists]]
+condition = "AND"
+paths = ['''(^|/)server/auth\.go$''']
+regexes = ['''^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$''']

@@ -1,0 +1,763 @@
+{
+  "schema_version": "1.0",
+  "research_date": "2026-11-06",
+  "status": "Proposed detector knowledge, not executable detectors",
+  "cards": [
+    {
+      "id": "EVM-01",
+      "title": "Authorization and confused-deputy failures",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** A caller reaches a privileged operation, spends somebody else's allowance, or changes another account's debt because authority is absent, checked against the wrong identity, or delegated too broadly. Source: OpenZeppelin describes role hierarchies and least privilege [E1].\n\n**Detect:** Build a capability graph from roles to mint/burn, asset movement, oracle updates, rescue, liquidation exemptions, and implementation changes. Trace `msg.sender`, `_msgSender()`, supplied `owner/from`, and `tx.origin` separately. Include internal functions reachable through every wrapper.\n\n**Test:** Generate a role-by-entrypoint matrix. An unrelated actor must not modify another account's claims without a valid authorization; granting a narrow role must not confer administrative powers indirectly.\n\n**Disprove/fix:** Public liquidation and permissionless maintenance may be intentional. A powerful documented administrator is not automatically an unauthorized exploit. Require an actual capability mismatch; bind identity to resource ownership and centralize explicit permission checks.",
+      "sections": {
+        "Mechanism": "A caller reaches a privileged operation, spends somebody else's allowance, or changes another account's debt because authority is absent, checked against the wrong identity, or delegated too broadly. Source: OpenZeppelin describes role hierarchies and least privilege [E1].",
+        "Detect": "Build a capability graph from roles to mint/burn, asset movement, oracle updates, rescue, liquidation exemptions, and implementation changes. Trace `msg.sender`, `_msgSender()`, supplied `owner/from`, and `tx.origin` separately. Include internal functions reachable through every wrapper.",
+        "Test": "Generate a role-by-entrypoint matrix. An unrelated actor must not modify another account's claims without a valid authorization; granting a narrow role must not confer administrative powers indirectly.",
+        "Disprove/fix": "Public liquidation and permissionless maintenance may be intentional. A powerful documented administrator is not automatically an unauthorized exploit. Require an actual capability mismatch; bind identity to resource ownership and centralize explicit permission checks."
+      },
+      "source_ids": [
+        "E1"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-02",
+      "title": "Initialization, upgrades, and storage corruption",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Missing or repeatable initialization, unauthorized upgrades, or incompatible layouts corrupt ownership, balances, or implementation control. Constructors initialize implementation storage, not proxy storage. OpenZeppelin documents initialization and upgrade-layout restrictions [E2].\n\n**Detect:** Resolve proxy \u2192 implementation \u2192 beacon/facets where applicable. Examine initialization deployment transactions, reinitializers, `_authorizeUpgrade`, inherited initialization order, storage gaps/namespaces, and migrations. Treat an uninitialized implementation separately from an uninitialized proxy: their consequences depend on architecture.\n\n**Test:** Initialize once, attempt every alternate initialization route, and test upgrades with populated balances, approvals, roles, and nonzero packed fields. Compare storage layouts and economically relevant state before/after migration.\n\n**Disprove/fix:** An apparently public initializer may be safely executed atomically at creation; establish reachability. Validate layouts with version-aware tooling, disable unused implementation initialization, restrict upgrade authority, and test actual migration paths.",
+      "sections": {
+        "Mechanism": "Missing or repeatable initialization, unauthorized upgrades, or incompatible layouts corrupt ownership, balances, or implementation control. Constructors initialize implementation storage, not proxy storage. OpenZeppelin documents initialization and upgrade-layout restrictions [E2].",
+        "Detect": "Resolve proxy \u2192 implementation \u2192 beacon/facets where applicable. Examine initialization deployment transactions, reinitializers, `_authorizeUpgrade`, inherited initialization order, storage gaps/namespaces, and migrations. Treat an uninitialized implementation separately from an uninitialized proxy: their consequences depend on architecture.",
+        "Test": "Initialize once, attempt every alternate initialization route, and test upgrades with populated balances, approvals, roles, and nonzero packed fields. Compare storage layouts and economically relevant state before/after migration.",
+        "Disprove/fix": "An apparently public initializer may be safely executed atomically at creation; establish reachability. Validate layouts with version-aware tooling, disable unused implementation initialization, restrict upgrade authority, and test actual migration paths."
+      },
+      "source_ids": [
+        "E2"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-03",
+      "title": "Same-function and cross-function reentrancy",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** An external interaction allows a callback before the relevant state transition is complete. Reentry through another method or contract can consume inconsistent balances even if the original method is protected. Solidity explicitly treats external calls as control transfers [E3].\n\n**Detect:** Build inter-contract call and read/write graphs around all external interactions, including token hooks, safe NFT transfers, fee recipients, flash callbacks, and plugin calls. Locate state read before an interaction and consumed again before final settlement.\n\n**Test:** Callback actors try every reachable state-changing entrypoint, nested depths, alternate accounts, and cross-contract paths. Assert total claims never exceed permitted assets/debt and each authorization is consumed at most once.\n\n**Disprove/fix:** External calls alone are not bugs. Prove an inconsistent state can be observed and used. Apply effects before interactions where suitable, enforce guards across the entire invariant boundary, or design explicit locked phases.",
+      "sections": {
+        "Mechanism": "An external interaction allows a callback before the relevant state transition is complete. Reentry through another method or contract can consume inconsistent balances even if the original method is protected. Solidity explicitly treats external calls as control transfers [E3].",
+        "Detect": "Build inter-contract call and read/write graphs around all external interactions, including token hooks, safe NFT transfers, fee recipients, flash callbacks, and plugin calls. Locate state read before an interaction and consumed again before final settlement.",
+        "Test": "Callback actors try every reachable state-changing entrypoint, nested depths, alternate accounts, and cross-contract paths. Assert total claims never exceed permitted assets/debt and each authorization is consumed at most once.",
+        "Disprove/fix": "External calls alone are not bugs. Prove an inconsistent state can be observed and used. Apply effects before interactions where suitable, enforce guards across the entire invariant boundary, or design explicit locked phases."
+      },
+      "source_ids": [
+        "E3"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-04",
+      "title": "Read-only reentrancy and inconsistent valuations",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** A `view` function exposes temporarily inconsistent accounting, and another protocol uses it for a state-changing decision. ChainSecurity documented Curve LP valuation inconsistencies between balance-derived values and token supply during liquidity removal [E4].\n\n**Detect:** Identify prices, conversion rates, collateral values, and `totalAssets` assembled from fields updated on opposite sides of a callback. Follow these getters into external lending, minting, and collateral consumers; a local write guard does not establish consumer safety.\n\n**Test:** Sample each getter inside callback windows and compare it with a coherent accounting snapshot. Attempt only local consumer actions using those observations. Require a violated consumer invariant, not merely a transient quote difference.\n\n**Disprove/fix:** A misleading view with no security-sensitive consumer may have lower impact. Use coherent snapshots, guarded valuation reads, or consumer-side phase checks supported by the integration's actual API.",
+      "sections": {
+        "Mechanism": "A `view` function exposes temporarily inconsistent accounting, and another protocol uses it for a state-changing decision. ChainSecurity documented Curve LP valuation inconsistencies between balance-derived values and token supply during liquidity removal [E4].",
+        "Detect": "Identify prices, conversion rates, collateral values, and `totalAssets` assembled from fields updated on opposite sides of a callback. Follow these getters into external lending, minting, and collateral consumers; a local write guard does not establish consumer safety.",
+        "Test": "Sample each getter inside callback windows and compare it with a coherent accounting snapshot. Attempt only local consumer actions using those observations. Require a violated consumer invariant, not merely a transient quote difference.",
+        "Disprove/fix": "A misleading view with no security-sensitive consumer may have lower impact. Use coherent snapshots, guarded valuation reads, or consumer-side phase checks supported by the integration's actual API."
+      },
+      "source_ids": [
+        "E4"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-05",
+      "title": "Unauthenticated callbacks and settlement context",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** A callback trusts caller-supplied pool identity, payer, tokens, or deltas and releases funds outside a legitimate operation. Uniswap's callback interface requires callers to authenticate the pool against its canonical factory [E5].\n\n**Detect:** Trace callback calldata into `transfer`, `transferFrom`, approvals, and debt updates. Verify provenance of factory, pool key, initiator, operation identifier, and expected assets. A caller claiming to be a pool is not proof.\n\n**Test:** Invoke callbacks directly; substitute each context field; replay completed callbacks; mix two simultaneous operations; exercise unexpected token directions. Settlement must correspond to an outstanding authorized obligation.\n\n**Disprove/fix:** Some authenticated pools can call callbacks permissionlessly at a third party's request, so caller authentication alone may be insufficient. Authenticate both the external source and the user-authorized operation; consume context once and reconcile repayment.",
+      "sections": {
+        "Mechanism": "A callback trusts caller-supplied pool identity, payer, tokens, or deltas and releases funds outside a legitimate operation. Uniswap's callback interface requires callers to authenticate the pool against its canonical factory [E5].",
+        "Detect": "Trace callback calldata into `transfer`, `transferFrom`, approvals, and debt updates. Verify provenance of factory, pool key, initiator, operation identifier, and expected assets. A caller claiming to be a pool is not proof.",
+        "Test": "Invoke callbacks directly; substitute each context field; replay completed callbacks; mix two simultaneous operations; exercise unexpected token directions. Settlement must correspond to an outstanding authorized obligation.",
+        "Disprove/fix": "Some authenticated pools can call callbacks permissionlessly at a third party's request, so caller authentication alone may be insufficient. Authenticate both the external source and the user-authorized operation; consume context once and reconcile repayment."
+      },
+      "source_ids": [
+        "E5"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-06",
+      "title": "Signatures, permits, replay, and incomplete intent",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** A valid signature authorizes an unintended action because nonce, domain, destination, asset, amount, deadline, or route is unbound. EIP-712 supplies typed hashing, not replay protection; ERC-2612 specifies permit nonce/deadline/domain constraints [E6, E7]. Permit2 integrations must correctly connect caller identity and transfer parameters [E8].\n\n**Detect:** Construct a signed-field versus executed-field table. Trace all unsigned fields affecting economic outcome. Inspect nonce namespaces, cancellation, partial fills, contract-wallet validation, and zero-address signer handling.\n\n**Test:** Reuse signatures across contracts, chain contexts, functions, partial fills, and nonce invalidation; mutate one executed field at a time. Verify cancellation/fill races locally.\n\n**Disprove/fix:** A relayer need not be the signer; recipient freedom may be explicitly signed policy. A permit grants spending approval, not general business intent. Use domain-separated typed authorization, one-time or correctly bounded fill state, and bind economically relevant context.",
+      "sections": {
+        "Mechanism": "A valid signature authorizes an unintended action because nonce, domain, destination, asset, amount, deadline, or route is unbound. EIP-712 supplies typed hashing, not replay protection; ERC-2612 specifies permit nonce/deadline/domain constraints [E6, E7]. Permit2 integrations must correctly connect caller identity and transfer parameters [E8].",
+        "Detect": "Construct a signed-field versus executed-field table. Trace all unsigned fields affecting economic outcome. Inspect nonce namespaces, cancellation, partial fills, contract-wallet validation, and zero-address signer handling.",
+        "Test": "Reuse signatures across contracts, chain contexts, functions, partial fills, and nonce invalidation; mutate one executed field at a time. Verify cancellation/fill races locally.",
+        "Disprove/fix": "A relayer need not be the signer; recipient freedom may be explicitly signed policy. A permit grants spending approval, not general business intent. Use domain-separated typed authorization, one-time or correctly bounded fill state, and bind economically relevant context."
+      },
+      "source_ids": [
+        "E6",
+        "E7",
+        "E8"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-07",
+      "title": "Multicall, forwarded identity, and repeated native value",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Nested execution preserves caller/value context in ways a leaf function misunderstands. The ERC-2771/Multicall incident demonstrated sender spoofing from a vulnerable composition of forwarded calldata and self-delegatecall [E9]. A separate risk is crediting the same `msg.value` independently in multiple delegated subcalls.\n\n**Detect:** Track provenance of sender suffixes and native value through dispatcher, forwarder, self-delegatecall, and nested multicall. Compare credited deposits with actual transaction value and explicit per-operation budgets.\n\n**Test:** Compose repeated payable calls, mixed payable/nonpayable calls, nested batches, and forwarded batches. Assert aggregate native-asset credit does not exceed received value, after legitimate prior balances are accounted for.\n\n**Disprove/fix:** Inheriting these components is not enough to establish exposure: verify actual dependency versions and forwarding paths. Preserve authenticated context across subcalls, use explicit remaining-value accounting, and apply the documented compatible implementation fixes.",
+      "sections": {
+        "Mechanism": "Nested execution preserves caller/value context in ways a leaf function misunderstands. The ERC-2771/Multicall incident demonstrated sender spoofing from a vulnerable composition of forwarded calldata and self-delegatecall [E9]. A separate risk is crediting the same `msg.value` independently in multiple delegated subcalls.",
+        "Detect": "Track provenance of sender suffixes and native value through dispatcher, forwarder, self-delegatecall, and nested multicall. Compare credited deposits with actual transaction value and explicit per-operation budgets.",
+        "Test": "Compose repeated payable calls, mixed payable/nonpayable calls, nested batches, and forwarded batches. Assert aggregate native-asset credit does not exceed received value, after legitimate prior balances are accounted for.",
+        "Disprove/fix": "Inheriting these components is not enough to establish exposure: verify actual dependency versions and forwarding paths. Preserve authenticated context across subcalls, use explicit remaining-value accounting, and apply the documented compatible implementation fixes."
+      },
+      "source_ids": [
+        "E9"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-08",
+      "title": "Nonstandard token behavior and integration assumptions",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Token movement differs from the accounting model: transfer taxes, rebases, callbacks, missing/false returns, pausing, blocklists, unusual decimals, or upgradeable token semantics. The original weird-erc20 repository provides concrete integration fixtures [E10].\n\n**Detect:** Compare credited/debited amounts with actual received/sent assets, including outgoing transfers. Identify raw ERC-20 calls, permanently trusted metadata, and caches that assume balances change only through protocol functions.\n\n**Test:** Use a capability matrix of supported token behaviors and dedicated mocks; combine callbacks with taxes or rebases. Check collateral, withdrawals, fees, liquidation, and emergency exits under each supported behavior.\n\n**Disprove/fix:** A deliberately excluded asset is a compatibility boundary, not automatically a reachable exploit. `SafeERC20` handles certain call/return irregularities; it does not fix economic accounting. Use documented asset admission rules, measured balance changes where appropriate, and dedicated adapters for rebase/share semantics.",
+      "sections": {
+        "Mechanism": "Token movement differs from the accounting model: transfer taxes, rebases, callbacks, missing/false returns, pausing, blocklists, unusual decimals, or upgradeable token semantics. The original weird-erc20 repository provides concrete integration fixtures [E10].",
+        "Detect": "Compare credited/debited amounts with actual received/sent assets, including outgoing transfers. Identify raw ERC-20 calls, permanently trusted metadata, and caches that assume balances change only through protocol functions.",
+        "Test": "Use a capability matrix of supported token behaviors and dedicated mocks; combine callbacks with taxes or rebases. Check collateral, withdrawals, fees, liquidation, and emergency exits under each supported behavior.",
+        "Disprove/fix": "A deliberately excluded asset is a compatibility boundary, not automatically a reachable exploit. `SafeERC20` handles certain call/return irregularities; it does not fix economic accounting. Use documented asset admission rules, measured balance changes where appropriate, and dedicated adapters for rebase/share semantics."
+      },
+      "source_ids": [
+        "E10"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-09",
+      "title": "Rounding, units, casts, and arithmetic boundaries",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Truncation, unsafe narrowing, intermediate overflow, signed/unsigned confusion, inconsistent decimals, or the wrong rounding direction transfers value or erases debt. OpenZeppelin provides checked casts and full-precision math utilities [E11]; ERC-4626 specifies direction-sensitive conversion behavior [E12].\n\n**Detect:** Annotate every number with asset/unit/scale and every division with who benefits. Follow `unchecked`, assembly, casts, multiplication before division, and zero-producing conversions. Track error accumulation over repeated operations.\n\n**Test:** Differentially compare with rational or high-precision reference models. Exercise 0/1 units, precision boundaries, extreme exchange rates, maximum supported values, and many small versus one large operation. Quantify total loss against a defined bound.\n\n**Disprove/fix:** Dust is not automatically exploitable; distinguish bounded expected rounding from repeatable value creation. Solidity overflow checks do not prevent precision errors or explicit narrowing truncation. Use suitable `mulDiv`, checked casts, explicit units, and protocol-defined conservative rounding.",
+      "sections": {
+        "Mechanism": "Truncation, unsafe narrowing, intermediate overflow, signed/unsigned confusion, inconsistent decimals, or the wrong rounding direction transfers value or erases debt. OpenZeppelin provides checked casts and full-precision math utilities [E11]; ERC-4626 specifies direction-sensitive conversion behavior [E12].",
+        "Detect": "Annotate every number with asset/unit/scale and every division with who benefits. Follow `unchecked`, assembly, casts, multiplication before division, and zero-producing conversions. Track error accumulation over repeated operations.",
+        "Test": "Differentially compare with rational or high-precision reference models. Exercise 0/1 units, precision boundaries, extreme exchange rates, maximum supported values, and many small versus one large operation. Quantify total loss against a defined bound.",
+        "Disprove/fix": "Dust is not automatically exploitable; distinguish bounded expected rounding from repeatable value creation. Solidity overflow checks do not prevent precision errors or explicit narrowing truncation. Use suitable `mulDiv`, checked casts, explicit units, and protocol-defined conservative rounding."
+      },
+      "source_ids": [
+        "E11",
+        "E12"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "ECO-03"
+      ]
+    },
+    {
+      "id": "EVM-10",
+      "title": "Vault inflation, donation, and share-price manipulation",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Externally changing the asset/share ratio causes unfair minting, redemptions, or collateral valuation. OpenZeppelin documents donation-driven inflation and virtual-asset/share defenses [E13].\n\n**Detect:** Trace raw token balances into `totalAssets`, conversions, lending collateral prices, and fees. Inspect zero/low supply, initial deposits, final redemptions, losses, donations, and custom ERC-4626 overrides.\n\n**Test:** Alternate participants through low-liquidity lifecycle states, unsolicited balance changes, and recovery after losses. Compare user claims and protocol assets under exact rounding. Include repeated victims and costs; a virtual offset is not a substitute for validating the complete implementation.\n\n**Disprove/fix:** Donation-induced price change alone does not prove extraction. Account for the attacker's irrecoverable contribution, fees, remaining shares, and any external consumer. Combine suitable initialization/virtual offsets, slippage controls, coherent accounting, and conservative collateral valuation.",
+      "sections": {
+        "Mechanism": "Externally changing the asset/share ratio causes unfair minting, redemptions, or collateral valuation. OpenZeppelin documents donation-driven inflation and virtual-asset/share defenses [E13].",
+        "Detect": "Trace raw token balances into `totalAssets`, conversions, lending collateral prices, and fees. Inspect zero/low supply, initial deposits, final redemptions, losses, donations, and custom ERC-4626 overrides.",
+        "Test": "Alternate participants through low-liquidity lifecycle states, unsolicited balance changes, and recovery after losses. Compare user claims and protocol assets under exact rounding. Include repeated victims and costs; a virtual offset is not a substitute for validating the complete implementation.",
+        "Disprove/fix": "Donation-induced price change alone does not prove extraction. Account for the attacker's irrecoverable contribution, fees, remaining shares, and any external consumer. Combine suitable initialization/virtual offsets, slippage controls, coherent accounting, and conservative collateral valuation."
+      },
+      "source_ids": [
+        "E13"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "ECO-01",
+        "ECO-02"
+      ]
+    },
+    {
+      "id": "EVM-11",
+      "title": "Arbitrary execution and ignored call outcomes",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** User-controlled target/calldata executes with protocol-held permissions or storage, or failed subcalls are treated as success. Solidity's security guidance covers authorized proxies and low-level-call hazards [E3].\n\n**Detect:** Trace inputs to `call`, `delegatecall`, fallback dispatch, plugin selection, token approvals, and return-data decoding. Distinguish external execution with the caller's own funds from a deputy holding pooled funds or approvals.\n\n**Test:** Substitute targets/selectors, revert or return malformed data, and fail one leg of a multi-step settlement. Assert credits, debits, and emitted success state agree with actual asset movement.\n\n**Disprove/fix:** Arbitrary execution is intentional for some wallets and routers; the question is whose authority and funds it uses. Restrict capability exposure, isolate privileged balances, validate call results and semantic outcomes, and avoid granting unrestricted storage execution to untrusted modules.",
+      "sections": {
+        "Mechanism": "User-controlled target/calldata executes with protocol-held permissions or storage, or failed subcalls are treated as success. Solidity's security guidance covers authorized proxies and low-level-call hazards [E3].",
+        "Detect": "Trace inputs to `call`, `delegatecall`, fallback dispatch, plugin selection, token approvals, and return-data decoding. Distinguish external execution with the caller's own funds from a deputy holding pooled funds or approvals.",
+        "Test": "Substitute targets/selectors, revert or return malformed data, and fail one leg of a multi-step settlement. Assert credits, debits, and emitted success state agree with actual asset movement.",
+        "Disprove/fix": "Arbitrary execution is intentional for some wallets and routers; the question is whose authority and funds it uses. Restrict capability exposure, isolate privileged balances, validate call results and semantic outcomes, and avoid granting unrestricted storage execution to untrusted modules."
+      },
+      "source_ids": [
+        "E3"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-12",
+      "title": "Ambiguous hashing and proof/claim binding",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Two distinct authorization messages share an ambiguous encoding, or a valid proof is applied to the wrong recipient, asset, epoch, or claim. Solidity documents collisions in packed encoding involving multiple dynamic inputs [E14].\n\n**Detect:** Inspect `abi.encodePacked` used for authentication, identifiers, or signatures; compare proof leaves with fields actually executed. Verify claim-consumption keys include the relevant campaign/epoch domain.\n\n**Test:** Mutate boundaries between dynamic fields; reuse valid proofs under changed recipients, domains, and claim epochs; repeat claims through alternate entrypoints. Each accepted proof must bind the precise authorized outcome.\n\n**Disprove/fix:** Fixed-length packed encodings can be unambiguous; a hashing pattern alone is not a finding. Verify the actual type/length constraints. Use canonical typed encodings, domain-bound leaves, audited proof construction/verification pairs, and one-time claim tracking.",
+      "sections": {
+        "Mechanism": "Two distinct authorization messages share an ambiguous encoding, or a valid proof is applied to the wrong recipient, asset, epoch, or claim. Solidity documents collisions in packed encoding involving multiple dynamic inputs [E14].",
+        "Detect": "Inspect `abi.encodePacked` used for authentication, identifiers, or signatures; compare proof leaves with fields actually executed. Verify claim-consumption keys include the relevant campaign/epoch domain.",
+        "Test": "Mutate boundaries between dynamic fields; reuse valid proofs under changed recipients, domains, and claim epochs; repeat claims through alternate entrypoints. Each accepted proof must bind the precise authorized outcome.",
+        "Disprove/fix": "Fixed-length packed encodings can be unambiguous; a hashing pattern alone is not a finding. Verify the actual type/length constraints. Use canonical typed encodings, domain-bound leaves, audited proof construction/verification pairs, and one-time claim tracking."
+      },
+      "source_ids": [
+        "E14"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-13",
+      "title": "Liveness, gas griefing, and stuck-state failures",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** An adversary enlarges mandatory work, creates an unserviceable queue item, or makes one external recipient revert, preventing unrelated users from exiting. Solidity warns about unbounded loops and gas-dependent execution [E3].\n\n**Detect:** Find state-growing arrays traversed in essential operations, global push payments, cleanup loops, attacker-controlled iteration, and catch/retry paths that never restore progress.\n\n**Test:** Increase adversarial state while measuring worst-case gas; add reverting recipients; test progress after partial failures and across pause/unpause transitions. An eligible user's exit should complete within the protocol's declared time/work bounds.\n\n**Disprove/fix:** A bounded batch that leaves recoverable work may be safe. Distinguish temporary congestion, intentionally paused service, and permanent lock. Use bounded incremental work, pull-based claims, isolation between recipients, and explicit retry/cancel transitions that preserve accounting.",
+      "sections": {
+        "Mechanism": "An adversary enlarges mandatory work, creates an unserviceable queue item, or makes one external recipient revert, preventing unrelated users from exiting. Solidity warns about unbounded loops and gas-dependent execution [E3].",
+        "Detect": "Find state-growing arrays traversed in essential operations, global push payments, cleanup loops, attacker-controlled iteration, and catch/retry paths that never restore progress.",
+        "Test": "Increase adversarial state while measuring worst-case gas; add reverting recipients; test progress after partial failures and across pause/unpause transitions. An eligible user's exit should complete within the protocol's declared time/work bounds.",
+        "Disprove/fix": "A bounded batch that leaves recoverable work may be safe. Distinguish temporary congestion, intentionally paused service, and permanent lock. Use bounded incremental work, pull-based claims, isolation between recipients, and explicit retry/cancel transitions that preserve accounting."
+      },
+      "source_ids": [
+        "E3"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "EVM-14",
+      "title": "Transient state, compiler conditions, and chain semantics",
+      "track": "evm",
+      "guidance_markdown": "**Mechanism:** Transaction-scoped transient values leak between calls, delegated modules collide on slots, or analysis assumes the wrong chain/compiler behavior. Solidity documents transient storage ownership and cleanup caveats [E15]. EIP-6780 changed `SELFDESTRUCT` behavior on adopting chains [E16]; Solidity maintains condition-aware compiler bug data [E17].\n\n**Detect:** Record exact compiler/settings and actual execution fork. Trace transient reads/writes across batches, delegatecalls, and caught reverts. Examine locks, temporary approvals, and settlement deltas for intended lifetime and namespacing.\n\n**Test:** Compare sequential calls within one transaction with separate transactions; exercise nested failure and rollback. Validate suspected compiler issues against affected versions, optimizer conditions, and reachable syntax.\n\n**Disprove/fix:** Transient state is cleared at transaction end, not call return; reverted frames roll back their changes. Do not apply obsolete destruction/redeployment assumptions universally. Pin the execution environment, clear call-scoped transient data, namespace shared-context slots, and confirm compiler-trigger conditions.\n\n**EIP-7702 extension:** On adopting chains, EOAs may delegate code execution; `tx.origin == msg.sender` no longer establishes that a call occurs only in the top execution frame. The EIP also identifies delegated-account initialization, storage migration, and intent-binding hazards [E18]. Proposed tests should include delegated EOAs in the caller matrix, authenticated initialization, and repeated/batched calls. Resolve delegated execution code rather than classifying accounts solely by historical EOA status or assuming an origin check prevents reentrancy.",
+      "sections": {
+        "Mechanism": "Transaction-scoped transient values leak between calls, delegated modules collide on slots, or analysis assumes the wrong chain/compiler behavior. Solidity documents transient storage ownership and cleanup caveats [E15]. EIP-6780 changed `SELFDESTRUCT` behavior on adopting chains [E16]; Solidity maintains condition-aware compiler bug data [E17].",
+        "Detect": "Record exact compiler/settings and actual execution fork. Trace transient reads/writes across batches, delegatecalls, and caught reverts. Examine locks, temporary approvals, and settlement deltas for intended lifetime and namespacing.",
+        "Test": "Compare sequential calls within one transaction with separate transactions; exercise nested failure and rollback. Validate suspected compiler issues against affected versions, optimizer conditions, and reachable syntax.",
+        "Disprove/fix": "Transient state is cleared at transaction end, not call return; reverted frames roll back their changes. Do not apply obsolete destruction/redeployment assumptions universally. Pin the execution environment, clear call-scoped transient data, namespace shared-context slots, and confirm compiler-trigger conditions.",
+        "EIP-7702 extension": "On adopting chains, EOAs may delegate code execution; `tx.origin == msg.sender` no longer establishes that a call occurs only in the top execution frame. The EIP also identifies delegated-account initialization, storage migration, and intent-binding hazards [E18]. Proposed tests should include delegated EOAs in the caller matrix, authenticated initialization, and repeated/batched calls. Resolve delegated execution code rather than classifying accounts solely by historical EOA status or assuming an origin check prevents reentrancy."
+      },
+      "source_ids": [
+        "E15",
+        "E16",
+        "E17",
+        "E18"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-01",
+      "title": "First-deposit inflation and near-empty vaults",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Low share supply makes conversion rounding material; unsolicited assets can increase assets per share before another depositor receives shares. OpenZeppelin documents this inflation risk and virtual-asset/share defenses [EC1].\n\n**Indicators:** `totalAssets()` derives from token balance; deposit mints using floor division; no minimum accepted shares; empty and nonempty branches use different scales. Inspect first deposit, complete exit, and reinitialization - not only deployment.\n\n**Tests/invariants:** Use two or more depositors; vary supply around zero, one share, and virtual offsets. Introduce externally transferred assets in the fixture, then compare value issued against contributed assets and explicit slippage constraints. Check cumulative loss across several later deposits, not just one victim. At unchanged economic conditions, deposit/redeem must not create net assets.\n\n**False positives/fixes:** Donations and yield legitimately increase share price. Require another party's uncompensated loss or a violated deposit constraint. Assess virtual offsets, precision, seed liquidity, internal accounting, and minimum-shares protection in combination; a recognizable mitigation is not a proof of safety.",
+      "sections": {
+        "Mechanism/preconditions": "Low share supply makes conversion rounding material; unsolicited assets can increase assets per share before another depositor receives shares. OpenZeppelin documents this inflation risk and virtual-asset/share defenses [EC1].",
+        "Indicators": "`totalAssets()` derives from token balance; deposit mints using floor division; no minimum accepted shares; empty and nonempty branches use different scales. Inspect first deposit, complete exit, and reinitialization - not only deployment.",
+        "Tests/invariants": "Use two or more depositors; vary supply around zero, one share, and virtual offsets. Introduce externally transferred assets in the fixture, then compare value issued against contributed assets and explicit slippage constraints. Check cumulative loss across several later deposits, not just one victim. At unchanged economic conditions, deposit/redeem must not create net assets.",
+        "False positives/fixes": "Donations and yield legitimately increase share price. Require another party's uncompensated loss or a violated deposit constraint. Assess virtual offsets, precision, seed liquidity, internal accounting, and minimum-shares protection in combination; a recognizable mitigation is not a proof of safety."
+      },
+      "source_ids": [
+        "EC1"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "EVM-10"
+      ]
+    },
+    {
+      "id": "ECO-02",
+      "title": "Manipulable collateral exchange rates and recursive valuation",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** A downstream lender interprets a manipulable vault conversion as realizable collateral value. A vault can comply with its interface while remaining unsuitable as a price oracle. Euler explicitly distinguishes exchange-rate manipulation, market relationships, liquidity, caps, and economic viability [EC2].\n\n**Indicators:** `convertToAssets`, redemption quotes, LP virtual prices, or nested wrappers feed borrowing capacity without independent checks. Build a valuation dependency graph; flag cycles and collateral that is also borrowable elsewhere.\n\n**Tests/invariants:** Perturb each dependency independently; reconcile share ownership and total supply; include redemption fees, withdrawal gates, strategy losses, liquidity shortages, and recursive borrowing. The modeled collateral value must not exceed the protocol's explicitly defined realizable value bound.\n\n**False positives/fixes:** A donation costs capital and may benefit other holders; an increased price alone proves no loss. Validate the entire extraction path. Internal cash accounting, conservative valuation, rate-change bounds, and market caps address different conditions; caps bound exposure without guaranteeing unprofitability.",
+      "sections": {
+        "Mechanism/preconditions": "A downstream lender interprets a manipulable vault conversion as realizable collateral value. A vault can comply with its interface while remaining unsuitable as a price oracle. Euler explicitly distinguishes exchange-rate manipulation, market relationships, liquidity, caps, and economic viability [EC2].",
+        "Indicators": "`convertToAssets`, redemption quotes, LP virtual prices, or nested wrappers feed borrowing capacity without independent checks. Build a valuation dependency graph; flag cycles and collateral that is also borrowable elsewhere.",
+        "Tests/invariants": "Perturb each dependency independently; reconcile share ownership and total supply; include redemption fees, withdrawal gates, strategy losses, liquidity shortages, and recursive borrowing. The modeled collateral value must not exceed the protocol's explicitly defined realizable value bound.",
+        "False positives/fixes": "A donation costs capital and may benefit other holders; an increased price alone proves no loss. Validate the entire extraction path. Internal cash accounting, conservative valuation, rate-change bounds, and market caps address different conditions; caps bound exposure without guaranteeing unprofitability."
+      },
+      "source_ids": [
+        "EC2"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "EVM-04",
+        "EVM-10"
+      ]
+    },
+    {
+      "id": "ECO-03",
+      "title": "Rounding amplification and stealth donations",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Individually tiny truncation errors compound through repeated share conversion, debt repayment, or fee settlement. Euler describes rounding remnants as a distinct exchange-rate manipulation channel [EC3].\n\n**Indicators:** Division before multiplication; downcast after scaling; mixed WAD/RAY/token units; different rounding in inverse operations; branches where debt shares or asset debits become zero. Track error sign through the entire expression rather than labeling every floor unsafe.\n\n**Tests/invariants:** Compare integer execution to a rational/high-precision reference. Exercise zero, one unit, denominator-minus-one, denominator, denominator-plus-one, extreme exchange rates, repeated small operations, and equivalent batched operations. Bound cumulative discrepancy explicitly. Borrowing positive assets must create economically adequate debt; repaying must not cancel more debt than received consideration supports.\n\n**False positives/fixes:** Intentional dust and conservative rounding are normal. Prove reachable amplification beyond the documented error budget. Fix the economic direction of the final result, improve intermediate precision, reject meaningful zero-share operations, and document maximum cumulative error.",
+      "sections": {
+        "Mechanism/preconditions": "Individually tiny truncation errors compound through repeated share conversion, debt repayment, or fee settlement. Euler describes rounding remnants as a distinct exchange-rate manipulation channel [EC3].",
+        "Indicators": "Division before multiplication; downcast after scaling; mixed WAD/RAY/token units; different rounding in inverse operations; branches where debt shares or asset debits become zero. Track error sign through the entire expression rather than labeling every floor unsafe.",
+        "Tests/invariants": "Compare integer execution to a rational/high-precision reference. Exercise zero, one unit, denominator-minus-one, denominator, denominator-plus-one, extreme exchange rates, repeated small operations, and equivalent batched operations. Bound cumulative discrepancy explicitly. Borrowing positive assets must create economically adequate debt; repaying must not cancel more debt than received consideration supports.",
+        "False positives/fixes": "Intentional dust and conservative rounding are normal. Prove reachable amplification beyond the documented error budget. Fix the economic direction of the final result, improve intermediate precision, reject meaningful zero-share operations, and document maximum cumulative error."
+      },
+      "source_ids": [
+        "EC3"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "EVM-09"
+      ]
+    },
+    {
+      "id": "ECO-04",
+      "title": "Missing solvency checks on alternative transitions",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** A non-borrow operation changes collateral or debt without enforcing the same account constraints. Euler's 2023 incident involved a missing health check on `donateToReserves`, enabling unhealthy self-created positions and profitable self-liquidation [EC4].\n\n**Indicators:** Collateral reductions in transfer, donate, redeem, switch-mode, reserve-conversion, migration, or batch routes; deferred checks only on some execution paths; health calculated before final accounting.\n\n**Tests/invariants:** Construct a matrix mapping every state-changing entry point to collateral, debt, and health effects. Starting from a valid position, allow all user-callable transitions; require the specified final solvency rule whenever user action worsens health. Check batch completion, callbacks, subaccounts, and delegation.\n\n**False positives/fixes:** Market moves can make users unhealthy without a contract bug. Temporary insolvency may be intended inside an atomic batch. Distinguish these from user-created insolvency that survives the required final check. Centralize status checks over every relevant path and validate the terminal batch state.",
+      "sections": {
+        "Mechanism/preconditions": "A non-borrow operation changes collateral or debt without enforcing the same account constraints. Euler's 2023 incident involved a missing health check on `donateToReserves`, enabling unhealthy self-created positions and profitable self-liquidation [EC4].",
+        "Indicators": "Collateral reductions in transfer, donate, redeem, switch-mode, reserve-conversion, migration, or batch routes; deferred checks only on some execution paths; health calculated before final accounting.",
+        "Tests/invariants": "Construct a matrix mapping every state-changing entry point to collateral, debt, and health effects. Starting from a valid position, allow all user-callable transitions; require the specified final solvency rule whenever user action worsens health. Check batch completion, callbacks, subaccounts, and delegation.",
+        "False positives/fixes": "Market moves can make users unhealthy without a contract bug. Temporary insolvency may be intended inside an atomic batch. Distinguish these from user-created insolvency that survives the required final check. Centralize status checks over every relevant path and validate the terminal batch state."
+      },
+      "source_ids": [
+        "EC4"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-05",
+      "title": "Liquidation incentives, close limits, dust, and bad debt",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** A liquidation pays excess collateral, destroys the wrong debt amount, leaves unliquidatable dust, or rewards self-created insolvency. Aave documents health-based eligibility and liquidation consideration; its parameters are protocol- and market-specific [EC5].\n\n**Indicators:** Bonus applied before/after inconsistent scaling; collateral cap without adjusted debt repayment; separate partial/full branches; protocol fee taken twice; cross-asset decimal mismatches; bad-debt counters not updated.\n\n**Tests/invariants:** Test eligibility boundaries, near-zero collateral, debt above collateral value, depleted liquidity, multiple liquidators, and same-owner borrower/liquidator pairs. Reconcile debt actually extinguished against tokens actually received. Collateral removed equals liquidator payout plus designated fees. Track residual bad debt explicitly.\n\n**False positives/fixes:** Legitimate liquidation bonuses transfer value and need not improve health in every insolvent case. Do not assert universal profitability or universal health improvement. Verify the documented liquidation policy, sustainable incentives, and consistent loss recognition; avoid \"fixes\" that simply prevent liquidation of underwater accounts.",
+      "sections": {
+        "Mechanism/preconditions": "A liquidation pays excess collateral, destroys the wrong debt amount, leaves unliquidatable dust, or rewards self-created insolvency. Aave documents health-based eligibility and liquidation consideration; its parameters are protocol- and market-specific [EC5].",
+        "Indicators": "Bonus applied before/after inconsistent scaling; collateral cap without adjusted debt repayment; separate partial/full branches; protocol fee taken twice; cross-asset decimal mismatches; bad-debt counters not updated.",
+        "Tests/invariants": "Test eligibility boundaries, near-zero collateral, debt above collateral value, depleted liquidity, multiple liquidators, and same-owner borrower/liquidator pairs. Reconcile debt actually extinguished against tokens actually received. Collateral removed equals liquidator payout plus designated fees. Track residual bad debt explicitly.",
+        "False positives/fixes": "Legitimate liquidation bonuses transfer value and need not improve health in every insolvent case. Do not assert universal profitability or universal health improvement. Verify the documented liquidation policy, sustainable incentives, and consistent loss recognition; avoid \"fixes\" that simply prevent liquidation of underwater accounts."
+      },
+      "source_ids": [
+        "EC5"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-06",
+      "title": "Interest accrual, index synchronization, and parameter transitions",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Balances are converted using inconsistent debt/supply indices, or time-dependent rates are applied to the wrong historical interval. Reserve rate models depend on utilization and configuration [EC6].\n\n**Indicators:** Accrual occurs after balance changes; one path reads stored debt while another reads accrued debt; reserves omit accrued fees; parameter updates replace rates before settling elapsed time; timestamp unit ambiguity.\n\n**Tests/invariants:** Compare \"accrue then act\" with the implementation's action path under a frozen reference model. Exercise same timestamp, long inactivity, extreme utilization, full repayment, fresh reserve, and rate-model change. Reconcile debt growth with lender earnings, protocol reserves, and explicitly modeled losses. Compare one long interval with subdivided intervals within the model's approximation tolerance.\n\n**False positives/fixes:** Continuous versus discrete compounding can produce intentional differences; negative rates may be supported. State the model before asserting monotonicity. Settle old state before changing principal or model parameters; use one consistent index basis and precision policy across all entry points.",
+      "sections": {
+        "Mechanism/preconditions": "Balances are converted using inconsistent debt/supply indices, or time-dependent rates are applied to the wrong historical interval. Reserve rate models depend on utilization and configuration [EC6].",
+        "Indicators": "Accrual occurs after balance changes; one path reads stored debt while another reads accrued debt; reserves omit accrued fees; parameter updates replace rates before settling elapsed time; timestamp unit ambiguity.",
+        "Tests/invariants": "Compare \"accrue then act\" with the implementation's action path under a frozen reference model. Exercise same timestamp, long inactivity, extreme utilization, full repayment, fresh reserve, and rate-model change. Reconcile debt growth with lender earnings, protocol reserves, and explicitly modeled losses. Compare one long interval with subdivided intervals within the model's approximation tolerance.",
+        "False positives/fixes": "Continuous versus discrete compounding can produce intentional differences; negative rates may be supported. State the model before asserting monotonicity. Settle old state before changing principal or model parameters; use one consistent index basis and precision policy across all entry points."
+      },
+      "source_ids": [
+        "EC6"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-07",
+      "title": "Manipulable spot prices and weak TWAP assumptions",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** A reachable pool state affects a price that controls lending, minting, liquidation, or settlement. Time-weighted averaging changes attack cost but does not establish safety. Uniswap documents v3 observation history and geometric-mean pricing behavior [EC7].\n\n**Indicators:** Reserves, `slot0`, or instantaneous pool quotes feed collateral valuation; very short averaging windows; missing observation history; zero-liquidity fallback; unchecked pool identity/token ordering; arithmetic treatment of signed ticks.\n\n**Tests/invariants:** Model low liquidity, concentrated liquidity gaps, several blocks of price displacement, changing observation capacity, and fallback activation. Compare the resulting borrowing benefit with the full modeled manipulation cost. Verify price orientation and decimal conversion using independently known token amounts.\n\n**False positives/fixes:** DEX execution naturally uses current prices; consuming a spot price is not automatically an oracle vulnerability. Establish a downstream value-sensitive sink. Require adequate history, liquidity-aware risk limits, independently sourced prices where appropriate, and explicit fallback semantics. A TWAP window is a risk parameter, not a universal constant.",
+      "sections": {
+        "Mechanism/preconditions": "A reachable pool state affects a price that controls lending, minting, liquidation, or settlement. Time-weighted averaging changes attack cost but does not establish safety. Uniswap documents v3 observation history and geometric-mean pricing behavior [EC7].",
+        "Indicators": "Reserves, `slot0`, or instantaneous pool quotes feed collateral valuation; very short averaging windows; missing observation history; zero-liquidity fallback; unchecked pool identity/token ordering; arithmetic treatment of signed ticks.",
+        "Tests/invariants": "Model low liquidity, concentrated liquidity gaps, several blocks of price displacement, changing observation capacity, and fallback activation. Compare the resulting borrowing benefit with the full modeled manipulation cost. Verify price orientation and decimal conversion using independently known token amounts.",
+        "False positives/fixes": "DEX execution naturally uses current prices; consuming a spot price is not automatically an oracle vulnerability. Establish a downstream value-sensitive sink. Require adequate history, liquidity-aware risk limits, independently sourced prices where appropriate, and explicit fallback semantics. A TWAP window is a risk parameter, not a universal constant."
+      },
+      "source_ids": [
+        "EC7"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-08",
+      "title": "Stale, mis-scaled, misrouted, and depeg-blind oracles",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Valid-looking oracle output has the wrong unit, age, asset identity, or economic meaning. Chainlink describes per-feed heartbeat/deviation behavior and application timestamp checks; the API marks `answeredInRound` deprecated [EC8, EC9].\n\n**Indicators:** Hard-coded decimals; signed answer cast before validation; price inversion in the wrong order; shared heartbeat across unlike feeds; a fallback returning a peg or an old cached value; wrapper price assumed equal to underlying.\n\n**Tests/invariants:** Test negative/zero answers where invalid for the selected feed, future/uninitialized timestamps, stale periods, feed replacement, different decimals, depegs, and redemption restrictions. Validate all legs of a composite quote; the newest timestamp must not hide an old component.\n\n**False positives/fixes:** Some feeds legitimately report signed non-price data; not all products use the same interfaces. Check semantics for the exact feed and chain. Set application-specific freshness and bounds, conservative fallback behavior, and clear distinction between market price, redemption rate, and assumed peg.",
+      "sections": {
+        "Mechanism/preconditions": "Valid-looking oracle output has the wrong unit, age, asset identity, or economic meaning. Chainlink describes per-feed heartbeat/deviation behavior and application timestamp checks; the API marks `answeredInRound` deprecated [EC8, EC9].",
+        "Indicators": "Hard-coded decimals; signed answer cast before validation; price inversion in the wrong order; shared heartbeat across unlike feeds; a fallback returning a peg or an old cached value; wrapper price assumed equal to underlying.",
+        "Tests/invariants": "Test negative/zero answers where invalid for the selected feed, future/uninitialized timestamps, stale periods, feed replacement, different decimals, depegs, and redemption restrictions. Validate all legs of a composite quote; the newest timestamp must not hide an old component.",
+        "False positives/fixes": "Some feeds legitimately report signed non-price data; not all products use the same interfaces. Check semantics for the exact feed and chain. Set application-specific freshness and bounds, conservative fallback behavior, and clear distinction between market price, redemption rate, and assumed peg."
+      },
+      "source_ids": [
+        "EC8",
+        "EC9"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-09",
+      "title": "L2 sequencer outage and restart windows",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Price-sensitive operations resume while users have unequal access or prices have not caught up. Chainlink documents uptime checks and recovery grace periods [EC10].\n\n**Indicators:** L2 deployment with no outage-aware policy; uptime feed's answer polarity misunderstood; recovery timer based on the wrong timestamp; initialization edge cases; liquidations and borrowing use different checks.\n\n**Tests/invariants:** Simulate sequencer down, just restarted, grace-period boundary, unknown/uninitialized status, and stale price data after the grace period. Verify each sensitive path follows the protocol's policy; uptime recovery does not itself imply a fresh asset price.\n\n**False positives/fixes:** Chain architecture, available feeds, and application risk differ. Missing this exact vendor feed is not proof of vulnerability if an equivalent mechanism exists. Define chain-specific outage handling and separate price freshness from availability. Test that emergency restrictions still permit intended repayments or risk-reducing actions where the design allows them.",
+      "sections": {
+        "Mechanism/preconditions": "Price-sensitive operations resume while users have unequal access or prices have not caught up. Chainlink documents uptime checks and recovery grace periods [EC10].",
+        "Indicators": "L2 deployment with no outage-aware policy; uptime feed's answer polarity misunderstood; recovery timer based on the wrong timestamp; initialization edge cases; liquidations and borrowing use different checks.",
+        "Tests/invariants": "Simulate sequencer down, just restarted, grace-period boundary, unknown/uninitialized status, and stale price data after the grace period. Verify each sensitive path follows the protocol's policy; uptime recovery does not itself imply a fresh asset price.",
+        "False positives/fixes": "Chain architecture, available feeds, and application risk differ. Missing this exact vendor feed is not proof of vulnerability if an equivalent mechanism exists. Define chain-specific outage handling and separate price freshness from availability. Test that emergency restrictions still permit intended repayments or risk-reducing actions where the design allows them."
+      },
+      "source_ids": [
+        "EC10"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-10",
+      "title": "Stable/weighted AMM invariant and scaling errors",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Scaling, rate providers, and invariant math interact so quoted payment understates required value. Balancer's November 2025 postmortem identifies exact-out rounding, rate-provider imprecision, and reachable low liquidity in affected composable stable pools [EC11].\n\n**Indicators:** Mixed decimal/rate scaling; reuse of exact-in rounding for exact-out; joins/exits represented as swaps; pool-share tokens included as assets; approximations without documented error bounds.\n\n**Tests/invariants:** Differential-test against high precision at low balances, imbalanced reserves, rate changes, and tiny trades. Generate paths combining swap, join, exit, and internal settlement. Verify the relevant fee-adjusted invariant under unchanged external prices; settlement balances must reconcile globally.\n\n**False positives/fixes:** Do not apply constant-product properties to stable or weighted curves. Changes in rate providers or liquidity legitimately change invariants. Use the protocol's own mathematical model with an independent implementation. Correct rounding end-to-end; check reachable intermediate states, not only the final pool balances.",
+      "sections": {
+        "Mechanism/preconditions": "Scaling, rate providers, and invariant math interact so quoted payment understates required value. Balancer's November 2025 postmortem identifies exact-out rounding, rate-provider imprecision, and reachable low liquidity in affected composable stable pools [EC11].",
+        "Indicators": "Mixed decimal/rate scaling; reuse of exact-in rounding for exact-out; joins/exits represented as swaps; pool-share tokens included as assets; approximations without documented error bounds.",
+        "Tests/invariants": "Differential-test against high precision at low balances, imbalanced reserves, rate changes, and tiny trades. Generate paths combining swap, join, exit, and internal settlement. Verify the relevant fee-adjusted invariant under unchanged external prices; settlement balances must reconcile globally.",
+        "False positives/fixes": "Do not apply constant-product properties to stable or weighted curves. Changes in rate providers or liquidity legitimately change invariants. Use the protocol's own mathematical model with an independent implementation. Correct rounding end-to-end; check reachable intermediate states, not only the final pool balances."
+      },
+      "source_ids": [
+        "EC11"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-11",
+      "title": "Concentrated-liquidity tick and fee-growth inconsistencies",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Price movement crosses a boundary without the matching active-liquidity transition, or fee growth is assigned to the wrong range. KyberSwap's postmortem attributes its 2023 incident to inconsistent crossing estimation/final price calculation, exacerbated by rounding [EC12].\n\n**Indicators:** Distinct predicates select crossing and update price; equality handling differs by direction; liquidity-net sign errors; tick bitmap traversal skips boundaries; fee-growth snapshots fail on position changes.\n\n**Tests/invariants:** At every swap step, compare tick, square-root price, and active liquidity with an independent sum of open ranges. Test both directions at exact boundaries and adjacent representable amounts. Exercise zero active liquidity, mint/burn around boundaries, and collecting before/after position changes.\n\n**False positives/fixes:** Protocol tick conventions differ at boundaries; encode the intended convention explicitly. Fee counters may intentionally wrap modularly. Establish correct model behavior first, then identify mismatches. Use consistent crossing decisions and independently test the price-bound and liquidity-transition properties.",
+      "sections": {
+        "Mechanism/preconditions": "Price movement crosses a boundary without the matching active-liquidity transition, or fee growth is assigned to the wrong range. KyberSwap's postmortem attributes its 2023 incident to inconsistent crossing estimation/final price calculation, exacerbated by rounding [EC12].",
+        "Indicators": "Distinct predicates select crossing and update price; equality handling differs by direction; liquidity-net sign errors; tick bitmap traversal skips boundaries; fee-growth snapshots fail on position changes.",
+        "Tests/invariants": "At every swap step, compare tick, square-root price, and active liquidity with an independent sum of open ranges. Test both directions at exact boundaries and adjacent representable amounts. Exercise zero active liquidity, mint/burn around boundaries, and collecting before/after position changes.",
+        "False positives/fixes": "Protocol tick conventions differ at boundaries; encode the intended convention explicitly. Fee counters may intentionally wrap modularly. Establish correct model behavior first, then identify mismatches. Use consistent crossing decisions and independently test the price-bound and liquidity-transition properties."
+      },
+      "source_ids": [
+        "EC12"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-12",
+      "title": "Reward checkpoints, epoch accounting, and dilution",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Stake changes without the corresponding reward checkpoint, so rewards are stolen, duplicated, discarded, or assigned retroactively. OpenZeppelin's Origin audit documents a reward-debt/checkpoint mismatch that discarded accrued rewards [EC13].\n\n**Indicators:** Balance or multiplier updated before accrued entitlement is settled; inconsistent `rewardDebt`; transfer paths omit checkpoints; reward notification resets duration unexpectedly; zero-supply periods distribute later to the first staker.\n\n**Tests/invariants:** Exercise stake, partial withdrawal, transfer, lock extension, claim, epoch rollover, and reward-rate changes in different orders. Track actual funded rewards separately from announced rewards. Paid plus outstanding claims must respect the defined funded budget, rounding allowance, and emission schedule. Repeated claims without new entitlement cannot increase payout.\n\n**False positives/fixes:** Retroactive allocations or empty-period carryover may be intended. Write down policy before flagging them. Checkpoint both account and global state consistently; define empty-supply behavior and isolate principal withdrawal from failure-prone optional reward transfers where appropriate.",
+      "sections": {
+        "Mechanism/preconditions": "Stake changes without the corresponding reward checkpoint, so rewards are stolen, duplicated, discarded, or assigned retroactively. OpenZeppelin's Origin audit documents a reward-debt/checkpoint mismatch that discarded accrued rewards [EC13].",
+        "Indicators": "Balance or multiplier updated before accrued entitlement is settled; inconsistent `rewardDebt`; transfer paths omit checkpoints; reward notification resets duration unexpectedly; zero-supply periods distribute later to the first staker.",
+        "Tests/invariants": "Exercise stake, partial withdrawal, transfer, lock extension, claim, epoch rollover, and reward-rate changes in different orders. Track actual funded rewards separately from announced rewards. Paid plus outstanding claims must respect the defined funded budget, rounding allowance, and emission schedule. Repeated claims without new entitlement cannot increase payout.",
+        "False positives/fixes": "Retroactive allocations or empty-period carryover may be intended. Write down policy before flagging them. Checkpoint both account and global state consistently; define empty-supply behavior and isolate principal withdrawal from failure-prone optional reward transfers where appropriate."
+      },
+      "source_ids": [
+        "EC13"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-13",
+      "title": "Asynchronous request/claim accounting",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Assets are counted both as pending and active, claims are repeated, or cancellation races with settlement. ERC-7540 specifies request/controller identity and separate pending, claimable, and claimed stages [EC14].\n\n**Indicators:** Request IDs used without controller; aggregate counters updated independently; assets transferred twice across request/claim; `max*` ignores claimable entitlements; synchronous previews retained for asynchronous flows.\n\n**Tests/invariants:** Model request, partial fulfillment, claim, operator changes, and cancellation only if the implementation supports it. Permute order across users and epochs. Each contribution must have exactly one accounting location or a reconciled split. A settled entitlement cannot be claimed again. Validate pro-rata behavior where the standard requires fungibility.\n\n**False positives/fixes:** Request IDs need not be unique per user, and IDs of zero have specific semantics. Exchange rates can change between request and claim by design. Use explicit state transitions, principal conservation, controller authorization, and a documented settlement-rate policy rather than imposing synchronous vault assumptions.",
+      "sections": {
+        "Mechanism/preconditions": "Assets are counted both as pending and active, claims are repeated, or cancellation races with settlement. ERC-7540 specifies request/controller identity and separate pending, claimable, and claimed stages [EC14].",
+        "Indicators": "Request IDs used without controller; aggregate counters updated independently; assets transferred twice across request/claim; `max*` ignores claimable entitlements; synchronous previews retained for asynchronous flows.",
+        "Tests/invariants": "Model request, partial fulfillment, claim, operator changes, and cancellation only if the implementation supports it. Permute order across users and epochs. Each contribution must have exactly one accounting location or a reconciled split. A settled entitlement cannot be claimed again. Validate pro-rata behavior where the standard requires fungibility.",
+        "False positives/fixes": "Request IDs need not be unique per user, and IDs of zero have specific semantics. Exchange rates can change between request and claim by design. Use explicit state transitions, principal conservation, controller authorization, and a documented settlement-rate policy rather than imposing synchronous vault assumptions."
+      },
+      "source_ids": [
+        "EC14"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "X05"
+      ]
+    },
+    {
+      "id": "ECO-14",
+      "title": "Temporary voting power and governance execution mismatch",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Transient balances obtain durable authority, or the action executed differs from the action approved. OpenZeppelin governance documents voting clocks, historical quorum, delays, and execution modules [EC15].\n\n**Indicators:** Current balance determines votes/quorum; flash-borrowable stake counted instantly; delegation updates double-count weight; inconsistent block/timestamp clocks; proposal hashes omit targets, values, calldata, or chain context; cancellation/execution state not consumed.\n\n**Tests/invariants:** Transfer/delegate tokens across actors around snapshot boundaries; try repeated voting and proposal re-execution in local tests. Total counted weight must follow the declared snapshot rules. Approved actions and executed actions must match exactly, with mandatory delays and authorization preserved.\n\n**False positives/fixes:** A timelock alone does not remove illegitimate voting power, and historical snapshots do not prevent longer-duration governance capture. Distinguish a contract bypass from a disclosed economic governance risk. Use historical voting sources, consistent clocks, action binding, and independently reviewed executor authority.",
+      "sections": {
+        "Mechanism/preconditions": "Transient balances obtain durable authority, or the action executed differs from the action approved. OpenZeppelin governance documents voting clocks, historical quorum, delays, and execution modules [EC15].",
+        "Indicators": "Current balance determines votes/quorum; flash-borrowable stake counted instantly; delegation updates double-count weight; inconsistent block/timestamp clocks; proposal hashes omit targets, values, calldata, or chain context; cancellation/execution state not consumed.",
+        "Tests/invariants": "Transfer/delegate tokens across actors around snapshot boundaries; try repeated voting and proposal re-execution in local tests. Total counted weight must follow the declared snapshot rules. Approved actions and executed actions must match exactly, with mandatory delays and authorization preserved.",
+        "False positives/fixes": "A timelock alone does not remove illegitimate voting power, and historical snapshots do not prevent longer-duration governance capture. Distinguish a contract bypass from a disclosed economic governance risk. Use historical voting sources, consistent clocks, action binding, and independently reviewed executor authority."
+      },
+      "source_ids": [
+        "EC15"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "ECO-15",
+      "title": "Perpetual funding, PnL, order timing, and LP valuation",
+      "track": "evm_economics",
+      "guidance_markdown": "**Mechanism/preconditions:** Trader liabilities, funding, or unrealized PnL are inconsistently included in pool value; order settlement admits prices from the wrong permitted time. GMX documents checkpointed funding and LP valuation; Synthetix's SIP-337 explains deterministic settlement windows [EC16-EC18].\n\n**Indicators:** Signed PnL converted to unsigned; average-entry updates inconsistent with size changes; open interest differs between modules; funding settled after modifying size; deposit/withdraw valuation omits trader claims; price report not bound to order time.\n\n**Tests/invariants:** Open, increase, reduce, flip, liquidate, and close both long/short positions. Reconcile trader equity, pool equity, protocol fees, funding transfers, and recognized bad debt under a common price/time snapshot. Test delayed execution, expired orders, partial settlement, and unavailable keepers.\n\n**False positives/fixes:** Price movement, spread, fee policy, and capped PnL legitimately change outcomes. Do not assume zero-sum behavior without modeling those flows. Use a shared state snapshot, explicit signed arithmetic, checkpoint-before-size-change semantics, and documented admissible price timestamps.",
+      "sections": {
+        "Mechanism/preconditions": "Trader liabilities, funding, or unrealized PnL are inconsistently included in pool value; order settlement admits prices from the wrong permitted time. GMX documents checkpointed funding and LP valuation; Synthetix's SIP-337 explains deterministic settlement windows [EC16-EC18].",
+        "Indicators": "Signed PnL converted to unsigned; average-entry updates inconsistent with size changes; open interest differs between modules; funding settled after modifying size; deposit/withdraw valuation omits trader claims; price report not bound to order time.",
+        "Tests/invariants": "Open, increase, reduce, flip, liquidate, and close both long/short positions. Reconcile trader equity, pool equity, protocol fees, funding transfers, and recognized bad debt under a common price/time snapshot. Test delayed execution, expired orders, partial settlement, and unavailable keepers.",
+        "False positives/fixes": "Price movement, spread, fee policy, and capped PnL legitimately change outcomes. Do not assume zero-sum behavior without modeling those flows. Use a shared state snapshot, explicit signed arithmetic, checkpoint-before-size-change semantics, and documented admissible price timestamps."
+      },
+      "source_ids": [
+        "EC16",
+        "EC17",
+        "EC18"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X01",
+      "title": "Authentic transport, unauthorized application message",
+      "track": "cross_chain",
+      "guidance_markdown": "**Mechanism/preconditions:** A receiver accepts a message delivered by a real bridge but fails to authenticate the remote application. Authentic transport is insufficient when anyone can publish messages through that transport. Chainlink explicitly separates router, source-chain, and sender validation. [XS1]\n\n**Detection:** Trace each mint, release, admin update, and oracle write backward through the receiver. Require a documented mapping from local transport caller to source domain and remote sender, plus destination/application binding where the format requires it. Inspect address decoding, chain-ID namespaces, peer registry updates, and fallback handlers.\n\n**Test/invariant:** In local mocks, independently substitute caller, source chain, sender, and recipient while retaining other valid fields. An unauthorized origin cannot change privileged state or receive backed assets.\n\n**False-positive control/fix:** Some applications intentionally accept public messages; prove a privileged effect before escalating. Validate the complete origin tuple and use the bridge version's authenticated context, not unauthenticated payload fields.",
+      "sections": {
+        "Mechanism/preconditions": "A receiver accepts a message delivered by a real bridge but fails to authenticate the remote application. Authentic transport is insufficient when anyone can publish messages through that transport. Chainlink explicitly separates router, source-chain, and sender validation. [XS1]",
+        "Detection": "Trace each mint, release, admin update, and oracle write backward through the receiver. Require a documented mapping from local transport caller to source domain and remote sender, plus destination/application binding where the format requires it. Inspect address decoding, chain-ID namespaces, peer registry updates, and fallback handlers.",
+        "Test/invariant": "In local mocks, independently substitute caller, source chain, sender, and recipient while retaining other valid fields. An unauthorized origin cannot change privileged state or receive backed assets.",
+        "False-positive control/fix": "Some applications intentionally accept public messages; prove a privileged effect before escalating. Validate the complete origin tuple and use the bridge version's authenticated context, not unauthenticated payload fields."
+      },
+      "source_ids": [
+        "XS1"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X02",
+      "title": "Replay, duplicate settlement, and retry confusion",
+      "track": "cross_chain",
+      "guidance_markdown": "**Mechanism/preconditions:** Verification proves a message existed; it does not always guarantee that business logic executes once. The OP interop base messaging specification explicitly leaves replay prevention to higher layers; this is not a claim that all OP messengers lack protection. [XS2]\n\n**Detection:** Identify replay-key construction, destination domain binding, consumption timing, rollback semantics, and multiple receiver paths. Check whether a nonce is scoped by source sender/chain. Cover upgrades that reset consumed-message state.\n\n**Test/invariant:** Replay identical messages through normal delivery, retry, alternate entrypoints, and historical versions. Successful settlement changes supply or claims at most once. A failed settlement can retry without double credit.\n\n**False-positive control/fix:** OP's cross-domain messenger records successful and failed relays separately; replay of a failed message can be intended. [XS3] Verify upstream guarantees before adding redundant flags. Make application settlement idempotent and key it to the authenticated message identity.",
+      "sections": {
+        "Mechanism/preconditions": "Verification proves a message existed; it does not always guarantee that business logic executes once. The OP interop base messaging specification explicitly leaves replay prevention to higher layers; this is not a claim that all OP messengers lack protection. [XS2]",
+        "Detection": "Identify replay-key construction, destination domain binding, consumption timing, rollback semantics, and multiple receiver paths. Check whether a nonce is scoped by source sender/chain. Cover upgrades that reset consumed-message state.",
+        "Test/invariant": "Replay identical messages through normal delivery, retry, alternate entrypoints, and historical versions. Successful settlement changes supply or claims at most once. A failed settlement can retry without double credit.",
+        "False-positive control/fix": "OP's cross-domain messenger records successful and failed relays separately; replay of a failed message can be intended. [XS3] Verify upstream guarantees before adding redundant flags. Make application settlement idempotent and key it to the authenticated message identity."
+      },
+      "source_ids": [
+        "XS2",
+        "XS3"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X03",
+      "title": "Invalid proof accepted through default or migrated state",
+      "track": "cross_chain",
+      "guidance_markdown": "**Mechanism/preconditions:** Uninitialized state, an accepted sentinel, or an inconsistent migration causes verification to succeed without a valid inclusion/authentication proof. Nomad's own August 2022 account describes a Replica authentication failure involving the interaction of zero-root initialization and message processing. [XS4]\n\n**Detection:** Follow the complete predicate that authorizes a message. Examine zero hashes, empty proof arrays, default mapping values, sentinel enum states, root timestamps, and post-upgrade initializers. Inspect verifier return handling and whether a verification result is tied to the payload actually executed.\n\n**Test/invariant:** Generate arbitrary previously unseen messages against fresh and migrated deployments; none can move assets without an authenticated origin and the required proof/state transition. Include empty/default roots and boundary timestamps.\n\n**False-positive control/fix:** A legitimate zero-valued field is not itself a vulnerability. Establish a path from a default to accepted authorization. Separate \"unknown,\" \"proven,\" and \"processed\" states explicitly and test migrations with adversarial messages.",
+      "sections": {
+        "Mechanism/preconditions": "Uninitialized state, an accepted sentinel, or an inconsistent migration causes verification to succeed without a valid inclusion/authentication proof. Nomad's own August 2022 account describes a Replica authentication failure involving the interaction of zero-root initialization and message processing. [XS4]",
+        "Detection": "Follow the complete predicate that authorizes a message. Examine zero hashes, empty proof arrays, default mapping values, sentinel enum states, root timestamps, and post-upgrade initializers. Inspect verifier return handling and whether a verification result is tied to the payload actually executed.",
+        "Test/invariant": "Generate arbitrary previously unseen messages against fresh and migrated deployments; none can move assets without an authenticated origin and the required proof/state transition. Include empty/default roots and boundary timestamps.",
+        "False-positive control/fix": "A legitimate zero-valued field is not itself a vulnerability. Establish a path from a default to accepted authorization. Separate \"unknown,\" \"proven,\" and \"processed\" states explicitly and test migrations with adversarial messages."
+      },
+      "source_ids": [
+        "XS4"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X04",
+      "title": "Finality, reorganization, and cross-chain ordering assumptions",
+      "track": "cross_chain",
+      "guidance_markdown": "**Mechanism/preconditions:** A destination makes an irreversible release before the source event has the required finality, or processes dependent messages out of order. Wormhole's integration guidance requires assessing consistency/finality and sequence handling; a valid signature alone does not establish an application's desired finality policy. [XS5]\n\n**Detection:** Map send, observed, finalized, executable, settled, and refunded states. Locate configurable confirmation/finality levels and keeper assumptions. Check stale configurations and whether governance changes can weaken finality unnoticed.\n\n**Test/invariant:** Model source reorgs, delayed delivery, duplicate attestations, and permuted message order. Value cannot be both refundable at source and settled at destination. State-dependent messages either enforce order or tolerate reordering.\n\n**False-positive control/fix:** Fast bridges may deliberately use liquidity providers and delayed settlement; model who absorbs reorg risk instead of declaring all pre-finality liquidity a bug. Record security assumptions and enforce suitable settlement gates, ordered nonces, or compensation logic.",
+      "sections": {
+        "Mechanism/preconditions": "A destination makes an irreversible release before the source event has the required finality, or processes dependent messages out of order. Wormhole's integration guidance requires assessing consistency/finality and sequence handling; a valid signature alone does not establish an application's desired finality policy. [XS5]",
+        "Detection": "Map send, observed, finalized, executable, settled, and refunded states. Locate configurable confirmation/finality levels and keeper assumptions. Check stale configurations and whether governance changes can weaken finality unnoticed.",
+        "Test/invariant": "Model source reorgs, delayed delivery, duplicate attestations, and permuted message order. Value cannot be both refundable at source and settled at destination. State-dependent messages either enforce order or tolerate reordering.",
+        "False-positive control/fix": "Fast bridges may deliberately use liquidity providers and delayed settlement; model who absorbs reorg risk instead of declaring all pre-finality liquidity a bug. Record security assumptions and enforce suitable settlement gates, ordered nonces, or compensation logic."
+      },
+      "source_ids": [
+        "XS5"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X05",
+      "title": "In-flight accounting, cancellation races, and permanently blocked queues",
+      "track": "cross_chain",
+      "guidance_markdown": "**Proposed system-level checks:** Cross-chain transfers need conservation across several ledgers, not a same-transaction balance assertion. For each request, enumerate pending, delivered, failed, retriable, canceled, refunded, and completed transitions. Track escrow, issued claims, fees, and burned or released assets separately.\n\n**Detection/test:** In a two-domain local simulator, permute delivery, cancellation, retry, pause, fee top-up, and upgrade. Inject a receiver revert, insufficient execution gas, expiry, and unavailable remote chain. Assert that a request never settles and refunds simultaneously; pending liabilities remain backed; recovery cannot redirect another user's claim; one malformed message cannot block unrelated requests indefinitely.\n\n**False-positive control/fix:** Delayed availability is not necessarily insolvency. State the contractual timeout and recovery guarantees. Use explicit request identities, terminal-state exclusion, bounded processing, and recoverable delivery. OP's successful/failed relay distinction is a useful concrete state-machine reference, not a universal implementation recipe. [XS3]",
+      "sections": {
+        "Proposed system-level checks": "Cross-chain transfers need conservation across several ledgers, not a same-transaction balance assertion. For each request, enumerate pending, delivered, failed, retriable, canceled, refunded, and completed transitions. Track escrow, issued claims, fees, and burned or released assets separately.",
+        "Detection/test": "In a two-domain local simulator, permute delivery, cancellation, retry, pause, fee top-up, and upgrade. Inject a receiver revert, insufficient execution gas, expiry, and unavailable remote chain. Assert that a request never settles and refunds simultaneously; pending liabilities remain backed; recovery cannot redirect another user's claim; one malformed message cannot block unrelated requests indefinitely.",
+        "False-positive control/fix": "Delayed availability is not necessarily insolvency. State the contractual timeout and recovery guarantees. Use explicit request identities, terminal-state exclusion, bounded processing, and recoverable delivery. OP's successful/failed relay distinction is a useful concrete state-machine reference, not a universal implementation recipe. [XS3]"
+      },
+      "source_ids": [
+        "XS3"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": [
+        "ECO-13"
+      ]
+    },
+    {
+      "id": "X06",
+      "title": "Missing signer and account-relationship authorization",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** A public key stored as an authority is accepted without requiring the corresponding signer, or a signed authority is not bound to the position being modified. Solana has no EVM-style implicit `msg.sender`; Anchor exposes signer and relationship constraints. [XS6, XS7]\n\n**Detection:** For every withdrawal/configuration update, distinguish instruction caller, signer, stored authority, PDA authority, token-account authority, and beneficiary. Inspect unchecked accounts and dynamic remaining-account lists.\n\n**Test/invariant:** Supply an unsigned expected authority, an unrelated valid signer, and a valid authority for a different vault. Each unauthorized combination must fail without changing balances.\n\n**False-positive control/fix:** A PDA legitimately signs through invocation, and delegation may be intentional. Validate the actual authority path. Requiring any signer is insufficient; bind that signer to the specific resource and permission.",
+      "sections": {
+        "Mechanism/preconditions": "A public key stored as an authority is accepted without requiring the corresponding signer, or a signed authority is not bound to the position being modified. Solana has no EVM-style implicit `msg.sender`; Anchor exposes signer and relationship constraints. [XS6, XS7]",
+        "Detection": "For every withdrawal/configuration update, distinguish instruction caller, signer, stored authority, PDA authority, token-account authority, and beneficiary. Inspect unchecked accounts and dynamic remaining-account lists.",
+        "Test/invariant": "Supply an unsigned expected authority, an unrelated valid signer, and a valid authority for a different vault. Each unauthorized combination must fail without changing balances.",
+        "False-positive control/fix": "A PDA legitimately signs through invocation, and delegation may be intentional. Validate the actual authority path. Requiring any signer is insufficient; bind that signer to the specific resource and permission."
+      },
+      "source_ids": [
+        "XS6",
+        "XS7"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X07",
+      "title": "Wrong owner, account type, mint, or sysvar",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** Attacker-controlled data is deserialized as trusted state, or a real account of the correct type belongs to the wrong pool/mint. An account's Solana `owner` is the program authorized to modify its data; it is distinct from a token account's transfer authority. [XS8] Sysvars occupy predefined addresses. [XS9]\n\n**Detection:** Check owning program, key/PDA, discriminator, length, mint, token-program identity, and account-to-pool relationships before data affects valuation or transfers. Inspect raw AccountInfo/UncheckedAccount paths and custom deserializers.\n\n**Test/invariant:** Substitute correctly shaped fake data; substitute legitimate state from another market; swap two same-decimal mints; replace a sysvar account. Trusted decisions must not consume unauthenticated account data.\n\n**False-positive control/fix:** Typed framework accounts may already enforce owner/type checks; inspect expanded/versioned behavior. An owner check alone does not prove the correct account instance. Add the missing relationship validation, not duplicate checks blindly.",
+      "sections": {
+        "Mechanism/preconditions": "Attacker-controlled data is deserialized as trusted state, or a real account of the correct type belongs to the wrong pool/mint. An account's Solana `owner` is the program authorized to modify its data; it is distinct from a token account's transfer authority. [XS8] Sysvars occupy predefined addresses. [XS9]",
+        "Detection": "Check owning program, key/PDA, discriminator, length, mint, token-program identity, and account-to-pool relationships before data affects valuation or transfers. Inspect raw AccountInfo/UncheckedAccount paths and custom deserializers.",
+        "Test/invariant": "Substitute correctly shaped fake data; substitute legitimate state from another market; swap two same-decimal mints; replace a sysvar account. Trusted decisions must not consume unauthenticated account data.",
+        "False-positive control/fix": "Typed framework accounts may already enforce owner/type checks; inspect expanded/versioned behavior. An owner check alone does not prove the correct account instance. Add the missing relationship validation, not duplicate checks blindly."
+      },
+      "source_ids": [
+        "XS8",
+        "XS9"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X08",
+      "title": "Arbitrary CPI and excessive delegated privileges",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** The program forwards signer or writable privileges into a caller-selected program. CPI cannot increase privileges above those passed, but the passed privileges may already be powerful. [XS10]\n\n**Detection:** Trace `invoke`, `invoke_signed`, dynamic program IDs, account metas, and signer seeds. Identify vault-authority PDAs forwarded into arbitrary integrations and whether the callee can act on other supplied accounts. Validate instruction identity as well as program identity. [XS11]\n\n**Test/invariant:** Replace the expected callee with a local adversarial mock and attempt unauthorized state transitions using only forwarded privileges. No out-of-scope asset or authority can be exercised.\n\n**False-positive control/fix:** Plugin routers may intentionally allow arbitrary programs. The issue is harmful authority delegation, not composability itself. Pin trusted programs or tightly bound capabilities/accounts. Do not transplant an EVM reentrancy finding: Solana prohibits indirect A\u2192B\u2192A reentry, while allowing direct self-recursion under runtime limits. [XS10]",
+      "sections": {
+        "Mechanism/preconditions": "The program forwards signer or writable privileges into a caller-selected program. CPI cannot increase privileges above those passed, but the passed privileges may already be powerful. [XS10]",
+        "Detection": "Trace `invoke`, `invoke_signed`, dynamic program IDs, account metas, and signer seeds. Identify vault-authority PDAs forwarded into arbitrary integrations and whether the callee can act on other supplied accounts. Validate instruction identity as well as program identity. [XS11]",
+        "Test/invariant": "Replace the expected callee with a local adversarial mock and attempt unauthorized state transitions using only forwarded privileges. No out-of-scope asset or authority can be exercised.",
+        "False-positive control/fix": "Plugin routers may intentionally allow arbitrary programs. The issue is harmful authority delegation, not composability itself. Pin trusted programs or tightly bound capabilities/accounts. Do not transplant an EVM reentrancy finding: Solana prohibits indirect A\u2192B\u2192A reentry, while allowing direct self-recursion under runtime limits. [XS10]"
+      },
+      "source_ids": [
+        "XS10",
+        "XS11"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X09",
+      "title": "PDA namespace collisions, omitted seeds, and noncanonical identities",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** A PDA omits the user, market, mint, or role needed to separate privileges; alternatively, multiple valid bumps create multiple identities where the application assumes one. Canonical derivation is a standard way to preserve one deterministic identity. [XS12]\n\n**Detection/test:** Build a table of every PDA's seed schema and authority role. Compare derivation at initialization, validation, and signing. Mutate user, pool, mint, role, and bump independently. A reward entitlement, loan, or administrative permission cannot be duplicated or borrowed from another namespace.\n\n**False-positive control/fix:** Noncanonical bumps are not automatically exploitable if uniqueness is otherwise enforced and the trusted bump was established at initialization. Separate intended multi-instance accounts from singletons. Bind semantic identity into seeds and validate a canonically established/stored bump.",
+      "sections": {
+        "Mechanism/preconditions": "A PDA omits the user, market, mint, or role needed to separate privileges; alternatively, multiple valid bumps create multiple identities where the application assumes one. Canonical derivation is a standard way to preserve one deterministic identity. [XS12]",
+        "Detection/test": "Build a table of every PDA's seed schema and authority role. Compare derivation at initialization, validation, and signing. Mutate user, pool, mint, role, and bump independently. A reward entitlement, loan, or administrative permission cannot be duplicated or borrowed from another namespace.",
+        "False-positive control/fix": "Noncanonical bumps are not automatically exploitable if uniqueness is otherwise enforced and the trusted bump was established at initialization. Separate intended multi-instance accounts from singletons. Bind semantic identity into seeds and validate a canonically established/stored bump."
+      },
+      "source_ids": [
+        "XS12"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X10",
+      "title": "Duplicate writable accounts and stale deserialized state",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** Two logical roles alias the same underlying account, creating double counting or conflicting serialized writes; alternatively, post-CPI logic uses a stale local copy of modified account data.\n\n**Detection/test:** For source/destination, creditor/debtor, pool/vault, and reward-account pairs, test identical addresses where distinctness is assumed. After a local CPI that changes balances, compare decisions using reloaded state versus cached structures. Assertions should cover net asset conservation and update consistency.\n\n**False-positive control/fix:** Intentional self-transfers and shared readonly accounts are valid. Current Anchor documentation describes default duplicate protection only for specific mutable account types that serialize on exit; other account wrappers can still permit duplicates, and installed versions matter. [XS7] Require distinctness where semantics demand it and reload externally modified state before use.",
+      "sections": {
+        "Mechanism/preconditions": "Two logical roles alias the same underlying account, creating double counting or conflicting serialized writes; alternatively, post-CPI logic uses a stale local copy of modified account data.",
+        "Detection/test": "For source/destination, creditor/debtor, pool/vault, and reward-account pairs, test identical addresses where distinctness is assumed. After a local CPI that changes balances, compare decisions using reloaded state versus cached structures. Assertions should cover net asset conservation and update consistency.",
+        "False-positive control/fix": "Intentional self-transfers and shared readonly accounts are valid. Current Anchor documentation describes default duplicate protection only for specific mutable account types that serialize on exit; other account wrappers can still permit duplicates, and installed versions matter. [XS7] Require distinctness where semantics demand it and reload externally modified state before use."
+      },
+      "source_ids": [
+        "XS7"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X11",
+      "title": "Reinitialization, closure revival, and lifecycle confusion",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** Initialization can reset an existing account's authority/accounting, or a supposedly closed account remains usable after another instruction restores its lamports/state in the same transaction. Solana's historical security material documents this lifecycle failure class. [XS13]\n\n**Detection/test:** Follow initialization, `init_if_needed`, reallocations, close paths, and authority changes. Compose close/refund/reuse and initialize/use/reinitialize within one local transaction. A consumed position or claimed entitlement cannot become active again, and preexisting balances cannot be reassigned by reinitialization.\n\n**False-positive control/fix:** Framework close behavior has changed; do not mandate an obsolete discriminator implementation from archived tutorials. Verify installed framework/runtime semantics and all later use checks. Keep account lifecycle transitions explicit, preserve one-time entitlements outside resettable state when necessary, and use current safe close primitives.",
+      "sections": {
+        "Mechanism/preconditions": "Initialization can reset an existing account's authority/accounting, or a supposedly closed account remains usable after another instruction restores its lamports/state in the same transaction. Solana's historical security material documents this lifecycle failure class. [XS13]",
+        "Detection/test": "Follow initialization, `init_if_needed`, reallocations, close paths, and authority changes. Compose close/refund/reuse and initialize/use/reinitialize within one local transaction. A consumed position or claimed entitlement cannot become active again, and preexisting balances cannot be reassigned by reinitialization.",
+        "False-positive control/fix": "Framework close behavior has changed; do not mandate an obsolete discriminator implementation from archived tutorials. Verify installed framework/runtime semantics and all later use checks. Keep account lifecycle transitions explicit, preserve one-time entitlements outside resettable state when necessary, and use current safe close primitives."
+      },
+      "source_ids": [
+        "XS13"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X12",
+      "title": "Token-2022 accounting and extension assumptions",
+      "track": "solana",
+      "guidance_markdown": "**Mechanism/preconditions:** A protocol credits the nominal transfer while transfer fees reduce received tokens, treats withheld fees as spendable assets, or assumes transfers cannot invoke extension logic. Solana documents withheld transfer fees and configurable fee authorities. [XS14] Transfer hooks execute custom logic through CPI; the original transfer accounts become readonly and original signer privileges do not simply extend to the hook. [XS15]\n\n**Detection/test:** Record the accepted token program and supported extension set for every asset. Test fee changes, fee caps, hooks, unexpected extra accounts, frozen/paused transfers, and unsupported extensions. Credits must match the intended spendable balance increase, and redemption promises must remain achievable.\n\n**False-positive control/fix:** Explicit rejection of unsupported extensions is valid. Do not label every hook an EVM-style reentrancy issue. Use extension-aware accounting and validated extra accounts; require explicit support or rejection policies.",
+      "sections": {
+        "Mechanism/preconditions": "A protocol credits the nominal transfer while transfer fees reduce received tokens, treats withheld fees as spendable assets, or assumes transfers cannot invoke extension logic. Solana documents withheld transfer fees and configurable fee authorities. [XS14] Transfer hooks execute custom logic through CPI; the original transfer accounts become readonly and original signer privileges do not simply extend to the hook. [XS15]",
+        "Detection/test": "Record the accepted token program and supported extension set for every asset. Test fee changes, fee caps, hooks, unexpected extra accounts, frozen/paused transfers, and unsupported extensions. Credits must match the intended spendable balance increase, and redemption promises must remain achievable.",
+        "False-positive control/fix": "Explicit rejection of unsupported extensions is valid. Do not label every hook an EVM-style reentrancy issue. Use extension-aware accounting and validated extra accounts; require explicit support or rejection policies."
+      },
+      "source_ids": [
+        "XS14",
+        "XS15"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X13",
+      "title": "Capability-object mismatch and shared-object authorization",
+      "track": "move",
+      "guidance_markdown": "**Mechanism/preconditions:** A valid capability for one resource authorizes a different resource, or a privileged shared-object operation lacks authorization. Sui recommends checking the relationship between capabilities and governed objects and treating upgrade authority as security-critical. [XS16]\n\n**Detection/test:** Trace capability creation, transfer, revocation, object-ID binding, shared-object access, and UpgradeCap custody. Supply a valid capability from another vault; invoke privileged shared-object methods with an unrelated sender. No authority can cross its intended object scope.\n\n**False-positive control/fix:** A public shared object is intentionally accessible, not universally privileged. Validate capability type plus instance relationship; distinguish intended global administrator powers from resource-specific rights. Model dependency and package upgrade assumptions explicitly.",
+      "sections": {
+        "Mechanism/preconditions": "A valid capability for one resource authorizes a different resource, or a privileged shared-object operation lacks authorization. Sui recommends checking the relationship between capabilities and governed objects and treating upgrade authority as security-critical. [XS16]",
+        "Detection/test": "Trace capability creation, transfer, revocation, object-ID binding, shared-object access, and UpgradeCap custody. Supply a valid capability from another vault; invoke privileged shared-object methods with an unrelated sender. No authority can cross its intended object scope.",
+        "False-positive control/fix": "A public shared object is intentionally accessible, not universally privileged. Validate capability type plus instance relationship; distinguish intended global administrator powers from resource-specific rights. Model dependency and package upgrade assumptions explicitly."
+      },
+      "source_ids": [
+        "XS16"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    },
+    {
+      "id": "X14",
+      "title": "Hot-potato receipts consumed without correct economic settlement",
+      "track": "move",
+      "guidance_markdown": "**Mechanism/preconditions:** Linear resource rules force receipt consumption, but vulnerable logic can still consume a receipt against the wrong pool, asset, quantity, or debtor. OpenZeppelin's original audit-pattern analysis describes this object-binding failure. [XS17]\n\n**Detection/test:** Trace every constructor/destructor of loan and settlement receipts. Bind source object ID, asset type, amount, and fee obligation from issue through consumption. Try repayment into a second valid pool, mismatched asset-index configuration, partial settlement, and alternate receipt-destruction branches. Settlement must restore the correct lender's claim.\n\n**False-positive control/fix:** Do not report a theoretical dropped receipt if the Move verifier prevents it. DeepBook's documented flash-loan implementation checks amount, originating pool, and asset type; use such implementations as negative controls. [XS18] The invariant is correct economic settlement, not merely that a repayment function was called.",
+      "sections": {
+        "Mechanism/preconditions": "Linear resource rules force receipt consumption, but vulnerable logic can still consume a receipt against the wrong pool, asset, quantity, or debtor. OpenZeppelin's original audit-pattern analysis describes this object-binding failure. [XS17]",
+        "Detection/test": "Trace every constructor/destructor of loan and settlement receipts. Bind source object ID, asset type, amount, and fee obligation from issue through consumption. Try repayment into a second valid pool, mismatched asset-index configuration, partial settlement, and alternate receipt-destruction branches. Settlement must restore the correct lender's claim.",
+        "False-positive control/fix": "Do not report a theoretical dropped receipt if the Move verifier prevents it. DeepBook's documented flash-loan implementation checks amount, originating pool, and asset type; use such implementations as negative controls. [XS18] The invariant is correct economic settlement, not merely that a repayment function was called."
+      },
+      "source_ids": [
+        "XS17",
+        "XS18"
+      ],
+      "recommendations_are_proposed": true,
+      "related_ids": []
+    }
+  ]
+}
